@@ -10,6 +10,8 @@ use Log::Log4perl;
 
 with 'MooseX::Log::Log4perl';
 
+our $VERSION = '2.000003';
+
 =head1 NAME
 
 Artemis::PRC - Base class for running test programs
