@@ -28,7 +28,6 @@ my $builder = $build_class->new
                        },
      requires => {
                   'perl'                        => '5.010',
-                  'Artemis::Config'             => '2.0100042',
                   'Method::Signatures'          => 0,
                   'Moose'                       => 0,
                   'Log::Log4perl'               => 0,

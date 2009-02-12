@@ -8,7 +8,6 @@ use File::Path;
 use Method::Signatures;
 use Moose;
 
-use Artemis::Config::Consumer;
 use Artemis::PRC::Proxy;
 
 extends 'Artemis::PRC';
@@ -222,10 +221,9 @@ starting the guests (if any) and to call test control functions.
 method run()
 {
 
-        my $consumer = Artemis::Config::Consumer->new;
-        my $config   = $consumer->get_local_data('prc');
         my $retval;
-        $self->log->logdie("can't get local data: $retval") if ref $config ne 'HASH';
+        open my $file, '<','/etc/artemis' or $self->log->logdie("Can not read /etc/artemis: $!. Will try to fetch config from server.");
+        my $config = YAML::Syck::LoadFile($file) or $self->log->logdie("Can't parse config");
         $self->{cfg} = $config;
         
         if ($config->{prc_nfs_server}) {
