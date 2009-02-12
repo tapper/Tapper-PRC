@@ -131,17 +131,17 @@ method time_reduce($elapsed, @guest_status)
         for (my $i=0; $i<=$#guest_status; $i++) {
                 if ($guest_status[$i]->{start}) {
                         $guest_status[$i]->{start}= max (0, $guest_status[$i]->{start} - $elapsed);
-                        if ($boot_timeout) {
+                        if (defined($boot_timeout)) {
                                 $boot_timeout = min($boot_timeout, $guest_status[$i]->{start});
                         } else {
                                 $boot_timeout = $guest_status[$i]->{start};
                         }
                 } elsif ($guest_status[$i]->{stop}) {
                         $guest_status[$i]->{stop}= max (0, $guest_status[$i]->{stop} - $elapsed);
-                        if ($boot_timeout) {
+                        if (defined($boot_timeout)) {
                                 $test_timeout = min($boot_timeout, $guest_status[$i]->{stop});
                         } else {
-                                $test_timeout = $guest_status[$i]->{stop} if not $test_timeout;
+                                $test_timeout = $guest_status[$i]->{stop} if not defined($test_timeout);
                                 $test_timeout = min($test_timeout, $guest_status[$i]->{stop})
                         }
                 }
