@@ -1,4 +1,4 @@
-#!/home/artemis/perl510/bin/perl
+#!/opt/artemis/bin/perl
 
 use strict;
 use warnings;
