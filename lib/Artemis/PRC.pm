@@ -3,6 +3,7 @@ package Artemis::PRC;
 use strict;
 use warnings;
 
+use IO::Socket::INET;
 use Method::Signatures;
 use Artemis::Config;
 use Moose;

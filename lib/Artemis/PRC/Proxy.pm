@@ -6,6 +6,7 @@ use warnings;
 use File::Basename;
 use File::Path;
 use IO::Select;
+use IO::Socket::INET;
 use List::Util qw(min max);
 use Method::Signatures;
 use Moose;
