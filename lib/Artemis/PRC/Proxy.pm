@@ -14,6 +14,11 @@ use Moose;
 
 extends 'Artemis::PRC';
 
+has select => (is  => 'rw',
+               isa => 'ArrayRef',
+               default => sub {},
+              );
+
 
 =head1 NAME
 
@@ -44,6 +49,9 @@ new().
 method BUILD($config)
 {
         $self->{cfg}=$config;
+        $self->{select} = new IO::Select();
+        
+
 };
 
 
@@ -158,14 +166,13 @@ method time_reduce($elapsed, @guest_status)
 Open a console file handle for each guest. 
 
 @param arrary ref - containing all file handles
-@param IO::Select object - add consoles to select
 
 @retval success - (array_ref, IO::Select)
 @retval error   - (string)
 
 =cut
 
-method open_console($handles, $select)
+method open_console($handles)
 {
         my $testrun = $self->cfg->{test_run};
         my $outdir  = $self->cfg->{paths}{output_dir}."/$testrun/test/";
@@ -193,13 +200,40 @@ method open_console($handles, $select)
                   or return qq(Can't open console "$fifo" for guest $guest_number:$!);
                 open($handles->[$i]->{output},">",$output_file)
                   or return qq(Can't open output file "$output_file" for guest $guest_number:$!);
-                $select->add($handles->[$i]->{console});
+                $self->{select}->add($handles->[$i]->{console});
 
                 
         }
-        return($handles, $select);
+        return($handles);
 }
 ;
+
+=head2 close_console
+
+Close a given console. 
+
+@param file handle - console file handle
+@param IO::Select object - add consoles to select
+
+@retval success - (array_ref, IO::Select)
+@retval error   - (string)
+
+=cut
+
+method open_console($console)
+{
+
+                open($handles->[$i]->{console}, "<",$fifo)
+                  or return qq(Can't open console "$fifo" for guest $guest_number:$!);
+                open($handles->[$i]->{output},">",$output_file)
+                  or return qq(Can't open output file "$output_file" for guest $guest_number:$!);
+                $self->{select}->add($handles->[$i]->{console});
+
+                
+        return($handles);
+}
+;
+
 
 
 =head2 read_console
@@ -260,11 +294,11 @@ method wait_for_messages
                                             Proto     => 'tcp'
                                            )
           or return "Can't open proxy server: $!";
-        my $select = new IO::Select( $server );
-        
+        $self->{select}->add($server);
+
 
         my $handles;
-        ($handles, $select) = $self->open_console($handles, $select);
+        ($handles) = $self->open_console($handles);
         return $handles if not ref($handles) eq "ARRAY";
         
 
@@ -291,7 +325,7 @@ method wait_for_messages
                 $timeout = $self->time_reduce($elapsed, @guest_status);
 
                 my $start_timeout = time();
-                my @ready = $select->can_read($timeout);
+                my @ready = $self->{select}->can_read($timeout);
                 $elapsed = time() - $start_timeout;
 
                 ($to_start, $to_stop) = $self->report_timeout($to_start, $to_stop, @guest_status) if not @ready;
@@ -301,10 +335,10 @@ method wait_for_messages
                         if ($fh == $server) {
                                 # Create a new socket
                                 my $new = $fh->accept;
-                                $select->add($new);
+                                $self->{select}->add($new);
                         } elsif ($fh->isa('IO::Socket::INET')){
                                 my $msg=<$fh>;
-                                $select->remove($fh);
+                                $self->{select}->remove($fh);
                                 $fh->close; # don't need message socket any more.
                                 chomp $msg;
                                 #        prc_number:0,end-testprogram
