@@ -8,7 +8,6 @@ use File::Path;
 use IO::Select;
 use IO::Socket::INET;
 use List::Util qw(min max);
-use Method::Signatures;
 use Moose;
 
 
@@ -46,13 +45,12 @@ new().
 
 =cut
 
-method BUILD($config)
+sub BUILD
 {
+        my ($self, $config) = @_;
         $self->{cfg}=$config;
         $self->{select} = new IO::Select();
-        
-
-};
+}
 
 
 =head2 msg_send
@@ -66,100 +64,14 @@ Append prc_count to message and send it to MCP
 
 =cut
 
-method msg_send($msg)
+sub msg_send
 {
+        my ($self, $msg) = @_;
         $msg   .= ",prc_count:";
         $msg   .= $self->{cfg}->{prc_count};
         my $retval = $self->mcp_send($msg );
         return $retval;
-};
-
-
-=head2 report_timeout
-
-A timeout occured. Check guests status array and report an error for each
-guest that is affected.
-
-@param int   - number of guests that haven't booted yet
-@param int   - number of guests that haven't finished their test programs yet
-@param array - status of each guest
-
-@retval (int, int) - (number of guests that haven't booted yet, number of
-
-=cut
-
-method report_timeout($to_start, $to_stop, @guest_status)
-{
-        # at least one guest wasn't started so we have to assume we hit the
-        # boot timeout of this guest.
-        if ($to_start) {
-                for (my $i=0;$i<=$#guest_status;$i++) {
-                        if ($guest_status[$i]->{start}) {
-                                $guest_status[$i]->{start} = 0;
-                                $guest_status[$i]->{stop}  = 0;
-                                $self->msg_send("prc_number:$i,error-testprogram:boot timeout reached");
-                                $to_start--;
-                                $to_stop--;
-                        }
-                }
-        } 
-        # all guests finished booting, so the timeout occured because a guest
-        # took to much time for its tests
-        elsif ($to_stop) {
-                for (my $i=0;$i<=$#guest_status;$i++) {
-                        if ($guest_status[$i]->{stop}) {
-                                $guest_status[$i]->{stop}  = 0;
-                                $self->msg_send("prc_number:$i,error-testprogram:test program timeout reached");
-                                $to_stop--;
-                        }
-                }
-        }
-        return ($to_start, $to_stop);
 }
-;
-
-
-
-=head2 time_reduce
-
-Reduce remaining timeout time for all guests by the time we slept in
-select. Returns the time to be used in the next sleep, i.e. the minimum of all
-guest timeouts greater zero.
-
-@param int   - time slept in select
-@param array - status of all guests
-
-@retval new value for timeout
-
-=cut
-
-method time_reduce($elapsed, @guest_status)
-{
-        my $boot_timeout;
-        my $test_timeout;
-        for (my $i=0; $i<=$#guest_status; $i++) {
-                if ($guest_status[$i]->{start}) {
-                        $guest_status[$i]->{start}= max (0, $guest_status[$i]->{start} - $elapsed);
-                        if (defined($boot_timeout)) {
-                                $boot_timeout = min($boot_timeout, $guest_status[$i]->{start});
-                        } else {
-                                $boot_timeout = $guest_status[$i]->{start};
-                        }
-                } elsif ($guest_status[$i]->{stop}) {
-                        $guest_status[$i]->{stop}= max (0, $guest_status[$i]->{stop} - $elapsed);
-                        if (defined($boot_timeout)) {
-                                $test_timeout = min($boot_timeout, $guest_status[$i]->{stop});
-                        } else {
-                                $test_timeout = $guest_status[$i]->{stop} if not defined($test_timeout);
-                                $test_timeout = min($test_timeout, $guest_status[$i]->{stop})
-                        }
-                }
-        }
-        
-        return $boot_timeout if $boot_timeout;
-        return max(1,$test_timeout);
-}
-;
 
 =head2 open_console
 
@@ -172,8 +84,9 @@ Open a console file handle for each guest.
 
 =cut
 
-method open_console($handles)
+sub open_console
 {
+        my ($self, $handles) = @_;
         my $testrun = $self->cfg->{test_run};
         my $outdir  = $self->cfg->{paths}{output_dir}."/$testrun/test/";
 
@@ -206,33 +119,7 @@ method open_console($handles)
         }
         return($handles);
 }
-;
 
-=head2 close_console
-
-Close a given console. 
-
-@param file handle - console file handle
-@param IO::Select object - add consoles to select
-
-@retval success - (array_ref, IO::Select)
-@retval error   - (string)
-
-=cut
-
-method open_console($console)
-{
-
-                open($handles->[$i]->{console}, "<",$fifo)
-                  or return qq(Can't open console "$fifo" for guest $guest_number:$!);
-                open($handles->[$i]->{output},">",$output_file)
-                  or return qq(Can't open output file "$output_file" for guest $guest_number:$!);
-                $self->{select}->add($handles->[$i]->{console});
-
-                
-        return($handles);
-}
-;
 
 
 
@@ -248,8 +135,9 @@ Read from guest console and write to associated log file.
 
 =cut
 
-method read_console($handles, $fh)
+sub read_console
 {
+        my ($self, $handles, $fh) = @_;
         my $file;
         my $maxread = 1024; # number of bytes to read from console
         my $i;
@@ -273,7 +161,7 @@ method read_console($handles, $fh)
         $retval = syswrite($file, $buffer);
         return "Can't write console of guest $i:$!" if not defined($retval);
         return 0;
-};
+}
 
 
 
@@ -287,8 +175,9 @@ they arrive within the timeout.
 
 =cut 
 
-method wait_for_messages
+sub wait_for_messages
 {
+        my ($self) = @_;
         my $server =  IO::Socket::INET->new(Listen    => 5,
                                             LocalPort => $self->cfg->{port} || 7357,
                                             Proto     => 'tcp'
@@ -302,34 +191,9 @@ method wait_for_messages
         return $handles if not ref($handles) eq "ARRAY";
         
 
-        # initialise guest_status array
-        # guests get boot timeout for start and their associated test timeouts
-        # for stop
-        my $to_start;
-        my $to_stop  = $to_start = $self->{cfg}->{prc_count};
-        my $retval;
-        my @guest_status;
-        # prc_count is always at least one, since we got a PRC running in host
-        for (my $i=0; $i<$self->{cfg}->{prc_count}; $i++) {
-                $guest_status[$i]={start => $self->{cfg}->{times}{boot_timeout},
-                                   stop => $self->{cfg}->{timeouts}[$i] || 0};  # timeouts array starts with 0 for 1st guest
-        }
-        my $timeout = $self->{cfg}->{times}{boot_timeout};
-        my $elapsed = 0;
-
  MESSAGE:
-        while ($to_stop) {
-
-                # time_reduce on the beginning of the loop so when the loop is
-                # restarted after a message is received, the timeout is recalculated
-                $timeout = $self->time_reduce($elapsed, @guest_status);
-
-                my $start_timeout = time();
-                my @ready = $self->{select}->can_read($timeout);
-                $elapsed = time() - $start_timeout;
-
-                ($to_start, $to_stop) = $self->report_timeout($to_start, $to_stop, @guest_status) if not @ready;
-
+        while (1) {
+                my @ready = $self->{select}->can_read();
 
                 foreach my $fh (@ready) {
                         if ($fh == $server) {
@@ -340,40 +204,7 @@ method wait_for_messages
                                 my $msg=<$fh>;
                                 $self->{select}->remove($fh);
                                 $fh->close; # don't need message socket any more.
-                                chomp $msg;
-                                #        prc_number:0,end-testprogram
-                                my ($number, $status, undef, $error) = $msg =~/prc_number:(\d+),(start|end|error)-testprogram(:(.+))?/ 
-                                  or $self->log->error(qq(Can't parse message "$msg" received from child machine. I'll ignore the message.))
-                                    and next MESSAGE;
-                                $self->log->debug("status $status in PRC $number, last PRC is ",$self->{cfg}->{prc_count});
-                
-                                
-                                if ($status eq "start") {
-                                        $retval = $self->msg_send($msg);
-                                        $guest_status[$number]->{start}=0;
-                                        $to_start--;
-                                        next MESSAGE;
-                                } elsif ($status eq "end") {
-                                        if ($guest_status[$number]->{start}) {
-                                                $self->log->warn("Received end for guest $number without having received start before.",
-                                                              " I probably missed it and thus send the start message to the server too.");
-                                                $retval = $self->msg_send("prc_number:$number,start-testprogram");
-                                                $self->log->warn($retval) if $retval;
-                                        }
-                        
-                                } elsif ($status eq "error") {
-                                        if ($guest_status[$number]->{start})
-                                        {
-                                                $self->log->warn("got an error but still have a start timeout. BUG!");
-                                                $to_stop--;
-                                                $guest_status[$number]->{start}=0;
-                                        }
-                                }
-
-                                # common for end and error
-                                $retval = $self->msg_send($msg);
-                                $guest_status[$number]->{stop}=0;
-                                $to_stop--;
+                                my $retval = $self->msg_send($msg);
                         }
                         else {
                                 $self->read_console($handles, $fh);
@@ -382,7 +213,7 @@ method wait_for_messages
         }                
         return 0;
 }
-;
+
 
 
 =head2 run
@@ -391,13 +222,13 @@ Run the PRC proxy used to forward status messages to MCP.
 
 =cut
 
-method run()
+sub run
 {
+        my ($self) = @_;
         syswrite $self->{cfg}->{syncwrite}, "start\n";   # inform parent that proxy is ready
         $self->log->info("Proxy started");
-
         $self->wait_for_messages();
-};
+}
 
 1;
 
