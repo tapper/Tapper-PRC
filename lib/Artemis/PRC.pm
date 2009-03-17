@@ -11,7 +11,7 @@ use Log::Log4perl;
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000007';
+our $VERSION = '2.000012';
 
 =head1 NAME
 
@@ -26,6 +26,7 @@ Artemis::PRC - Base class for running test programs
 =cut
 
 has cfg => (is      => 'rw',
+            isa     => 'HashRef',
             default => sub { {} },
            );
 
@@ -48,7 +49,7 @@ Tell the MCP server our current status. This is done using a TCP connection.
 
 method mcp_send($message)
 {
-        my $server = $self->cfg->{server} or return "MCP host unknown";
+        my $server = $self->cfg->{mcp_server} or return "MCP host unknown";
         my $port   = $self->cfg->{port} || 7357;
 
         $self->log->info(qq(Sending status message "$message" to MCP host "$server"));

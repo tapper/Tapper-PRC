@@ -13,10 +13,7 @@ use Moose;
 
 extends 'Artemis::PRC';
 
-has select => (is  => 'rw',
-               isa => 'ArrayRef',
-               default => sub {},
-              );
+has select => (is  => 'rw');
 
 
 =head1 NAME
