@@ -37,24 +37,37 @@ moment.
 
 method guest_start
 {
-        foreach my $guest (@{$self->cfg->{guests}}) {
+        my $retval;
+        for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
+                my $guest = $self->cfg->{guests}->[$i];
                 if ($guest->{exec}) {
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
-                        system($startscript) == 0 or return qq(Can't start virtualisation guest using startscript "$startscript");
+                        if (not (system($startscript) == 0)) {
+                                $retval = qq(Can't start virtualisation guest using startscript "$startscript");
+                                $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
+                                return $retval;
+                        }  
                         
                 } 
                 elsif ($guest->{kvm}){
                         my $startscript = $guest->{kvm};
                         $self->log->info("Try to start virtualisation guest with $startscript");
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
-                        system($startscript) == 0 or return qq(Can't start virtualisation guest using startscript "$startscript");
-                        
+                        if (not system($startscript) ) {
+                                $retval = qq(Can't start virtualisation guest using startscript "$startscript");
+                                $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
+                                return $retval;
+                        }
                 } elsif ($guest->{svm}){
                         $self->log->info("Try load Xen guest described in ",$guest->{svm});
                         print STDERR "Artemis::PRC::Testcontrol: xm create ",$guest->{svm},"\n";
-                        system("xm","create",$guest->{svm}) == 0 or return "Can't start xen guest described in ".$guest->{svm};
+                        if (not (system("xm","create",$guest->{svm}) == 0)) {
+                                $retval = "Can't start xen guest described in $guest->{svm}";
+                                $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
+                                return $retval;
+                        }  
                 }
         }
         return 0;
@@ -266,11 +279,7 @@ method run()
                         <$read>;
                         # report testprogram status to Proxy
                         $retval = $self->guest_start();
-                        if ($retval) {
-                                $self->log->error($retval);
-                                $self->mcp_inform("error-testprogram:$retval");
-                        }
-                        $self->{report_server} = 'localhost';
+                        $self->log->error($retval) if $retval;
                 }
 
         }
