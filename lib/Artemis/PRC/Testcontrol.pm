@@ -285,16 +285,16 @@ method run()
         }
 
         $retval = $self->mcp_inform('start-testprogram');
-        $retval = $self->control_testprogram() if $self->cfg->{test_program};
-        
-        if ($retval) {
-                $self->log->error($retval);
-                $self->mcp_inform("error-testprogram:$retval");
-        } else {
-                my $program = $self->cfg->{test_program};
-                $self->log->info("Successfully finished test suite $program");
-                $retval = $self->mcp_inform('end-testprogram');
+        if ($self->cfg->{test_program}) {
+                $retval = $self->control_testprogram();
+                if ($retval) {
+                        $self->log->error($retval);
+                        $self->mcp_inform("error-testprogram:$retval");
+                } else {
+                        $self->log->info("Successfully finished test suite $program");
+                }
         }
+        $retval = $self->mcp_inform('end-testprogram');
         
 
 };
