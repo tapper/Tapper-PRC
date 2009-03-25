@@ -40,22 +40,11 @@ method guest_start
         my $retval;
         for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
                 my $guest = $self->cfg->{guests}->[$i];
-                if ($guest->{exec}) {
+                if ($guest->{kvm}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
-                        if (not (system($startscript) == 0)) {
-                                $retval = qq(Can't start virtualisation guest using startscript "$startscript");
-                                $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
-                                return $retval;
-                        }  
-                        
-                } 
-                elsif ($guest->{kvm}){
-                        my $startscript = $guest->{kvm};
-                        $self->log->info("Try to start virtualisation guest with $startscript");
-                        return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
-                        if (not system($startscript) ) {
+                        if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
                                 $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
                                 return $retval;
