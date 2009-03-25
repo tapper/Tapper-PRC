@@ -146,7 +146,7 @@ method control_testprogram()
         my $out_dir  = $self->cfg->{paths}{output_dir}."/$test_run/test/";
         my $progpath = $self->cfg->{paths}{testprog_path};
         my $program  = $self->cfg->{test_program};
-        my $timeout  = $self->cfg->{timeout_after_testprogram} || 0;
+        my $timeout  = $self->cfg->{timeout_testprogram} || 0;
         my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters}; 
         $timeout = int $timeout;
 
