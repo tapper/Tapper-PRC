@@ -280,7 +280,7 @@ method run()
                         $self->log->error($retval);
                         $self->mcp_inform("error-testprogram:$retval");
                 } else {
-                        $self->log->info("Successfully finished test suite $program");
+                        $self->log->info("Successfully finished test suite ".$self->cfg->{test_program});
                 }
         }
         $retval = $self->mcp_inform('end-testprogram');
