@@ -40,7 +40,7 @@ method guest_start
         my $retval;
         for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
                 my $guest = $self->cfg->{guests}->[$i];
-                if ($guest->{kvm}){
+                if ($guest->{exec}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
