@@ -135,6 +135,26 @@ method mcp_inform(@msg)
 
 
 
+=head2 mcp_error
+
+Log an error and exit.
+
+@param string - messages to send to MCP
+
+@return never returns
+
+=cut
+
+sub mcp_error
+{
+
+        my ($self, $error) = @_;
+        $self->log->error($error);
+        $self->mcp_inform("error-testprogram:$error");
+        exit 1;
+};
+
+
 
 1;
 
