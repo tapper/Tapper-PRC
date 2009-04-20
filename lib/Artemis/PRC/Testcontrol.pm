@@ -225,7 +225,10 @@ method run()
 {
 
         my $retval;
-        open my $file, '<','/etc/artemis' or $self->log->logdie("Can not read /etc/artemis: $!. Will try to fetch config from server.");
+        my $config_file_name = '/etc/artemis';
+        $config_file_name = $ENV{ARTEMIS_CONFIG} if $ENV{ARTEMIS_CONFIG};
+
+        open my $file, '<',$config_file_name or $self->log->logdie("Can not read $config_file_name: $!. Will try to fetch config from server.");
         my $config = YAML::Syck::LoadFile($file) or $self->log->logdie("Can't parse config");
         $self->{cfg} = $config;
         
