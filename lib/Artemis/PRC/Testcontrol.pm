@@ -283,6 +283,19 @@ method run()
                         $self->log->info("Successfully finished test suite ".$self->cfg->{test_program});
                 }
         }
+
+        if ($self->cfg->{max_reboot}) {
+                $self->mcp_inform("reboot:".$self->cfg->{reboot_counter},$self->cfg->{max_reboot}); # mcp_inform joins messages with comma
+                if ($self->cfg->{reboot_counter} < $self->cfg->{max_reboot}) {
+                        $self->cfg->{reboot_counter}++;
+                        YAML::Syck::DumpFile($file) or $self->mcp_error("Can't parse config");
+                        $self->log_and_exec("reboot");
+                        return 0;
+                }
+
+        }
+
+
         $retval = $self->mcp_inform('end-testprogram');
         
 
