@@ -107,14 +107,14 @@ only want to mount this NFS share in live mode.
 
 method nfs_mount
 {
-        my $error;
+        my ($error, $retval);
         File::Path->mkpath($self->cfg->{paths}{prc_nfs_mountdir}, {error => \$error}) if not -d $self->cfg->{paths}{prc_nfs_mountdir};
         foreach my $diag (@$error) {
                 my ($file, $message) = each %$diag;
                 return "general error: $message\n" if $file eq '';
                 return "Can't create $file: $message";
         }
-        my ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
+        ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
         return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$retval" if $error;
         return 0;
 };
