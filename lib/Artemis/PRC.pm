@@ -97,7 +97,7 @@ method mcp_send($message)
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
 					     PeerPort => $port,
 					     Proto    => 'tcp')){
-		$sock->print("$message\n");
+		print $sock ("$message\n");
 		close $sock;
 	} else {
                 return("Can't connect to MCP: $!");
