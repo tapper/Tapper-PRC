@@ -278,8 +278,7 @@ method run()
         if ($self->cfg->{test_program}) {
                 $retval = $self->control_testprogram();
                 if ($retval) {
-                        $self->log->error($retval);
-                        $self->mcp_inform("error-testprogram:$retval");
+                        $self->mcp_error($retval);
                 } else {
                         $self->log->info("Successfully finished test suite ".$self->cfg->{test_program});
                 }
