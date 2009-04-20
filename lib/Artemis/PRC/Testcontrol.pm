@@ -87,7 +87,8 @@ method create_log()
                                 return "Can't remove $file:$message\n";
                         }
                 }
-                system("mkfifo",$fifo) == 0 or return "Can't create guest console file $fifo" if not -e $fifo;
+                my ($error, $retval) = $self->log_and_exec("mkfifo",$fifo);
+                return "Can't create guest console file $fifo: $retval" if $error;
         }
         return 0;
 };
@@ -113,8 +114,8 @@ method nfs_mount
                 return "general error: $message\n" if $file eq '';
                 return "Can't create $file: $message";
         }
-        system("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir}) == 0 
-          or return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$!";
+        my ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
+        return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$retval" if $error;
         return 0;
 };
 
