@@ -273,7 +273,8 @@ method run()
 
         }
 
-        $retval = $self->mcp_inform('start-testprogram');
+        $retval = $self->mcp_inform('start-testprogram') if not $self->cfg->{reboot_counter};
+
         if ($self->cfg->{test_program}) {
                 $retval = $self->control_testprogram();
                 if ($retval) {
