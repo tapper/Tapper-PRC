@@ -228,10 +228,10 @@ method run()
         my $config_file_name = '/etc/artemis';
         $config_file_name = $ENV{ARTEMIS_CONFIG} if $ENV{ARTEMIS_CONFIG};
 
-        open my $file, '<',$config_file_name or $self->log->logdie("Can not read $config_file_name: $!. Will try to fetch config from server.");
-        my $config = YAML::Syck::LoadFile($file) or $self->log->logdie("Can't parse config");
+        my $config = YAML::Syck::LoadFile($config_file_name) or $self->log->logdie("Can't read config file $config_file_name: $!");
         $self->{cfg} = $config;
-        
+        $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
+
         if ($config->{prc_nfs_server}) {
                 $retval = $self->nfs_mount();
                 $self->log->logdie($retval) if $retval;
@@ -292,7 +292,7 @@ method run()
                 $self->mcp_inform("reboot:".$self->cfg->{reboot_counter},$self->cfg->{max_reboot}); # mcp_inform joins messages with comma
                 if ($self->cfg->{reboot_counter} < $self->cfg->{max_reboot}) {
                         $self->cfg->{reboot_counter}++;
-                        YAML::Syck::DumpFile($file) or $self->mcp_error("Can't parse config");
+                        YAML::Syck::DumpFile($config_file_name, $self->{cfg}) or $self->mcp_error("Can't write config to file: $!");
                         $self->log_and_exec("reboot");
                         return 0;
                 }
