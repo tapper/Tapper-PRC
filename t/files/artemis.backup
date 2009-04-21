@@ -1,0 +1,6 @@
+--- 
+guests: []
+
+max_reboot: 2
+mcp_server: localhost
+port: 1337
