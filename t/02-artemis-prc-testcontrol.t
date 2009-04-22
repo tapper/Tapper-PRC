@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Test::MockModule;
+use File::Temp qw/ :seekable /;
+
 
 use Artemis::Model 'model';
 use Artemis::Schema::TestTools;
@@ -12,7 +14,6 @@ use Artemis::Schema::TestTools;
 
 use Test::More tests => 7;
 
-my $config_file = 't/files/artemis.config';
 my $config_bkup = 't/files/artemis.backup';
 
 # (XXX) need to find a way to include log4perl into tests to make sure no
@@ -35,9 +36,11 @@ $mock_control->mock('nfs_mount', sub { return(0);});
 my $mock_prc = new Test::MockModule('Artemis::PRC');
 $mock_prc->mock('log_and_exec', sub { return(0);});
 
-$ENV{ARTEMIS_CONFIG} = $config_file;
 
+my $fh          = File::Temp->new();
+my $config_file = $fh->filename;
 system("cp",$config_bkup, $config_file) == 0 or die "Can't copy config file:$!";
+$ENV{ARTEMIS_CONFIG} = $config_file;
 
 my $pid=fork();
 if ($pid==0) {
