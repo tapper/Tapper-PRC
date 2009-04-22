@@ -76,7 +76,7 @@ method create_log()
 {
         for(my $i=0; $i <= $#{$self->cfg->{guests}}; $i++) {
                 my $guest_number=$i+1;
-                my $fifo = "/xen/images/guest$guest_number.fifo";
+                my $fifo = "/tmp/guest$guest_number.fifo";
                 if (not -p "$fifo") {
                         my $error;
                         rmtree($fifo,{verbose => 0, error => \$error});
