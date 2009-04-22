@@ -104,7 +104,7 @@ sub open_console
                 }
 
 
-                my $fifo = "/xen/images/guest$guest_number.fifo";
+                my $fifo = "/tmp/guest$guest_number.fifo";
                 my $output_file=$self->cfg->{paths}{output_dir}."/$testrun/test/guest-$guest_number/console";
                 open($handles->[$i]->{console}, "<",$fifo)
                   or return qq(Can't open console "$fifo" for guest $guest_number:$!);
