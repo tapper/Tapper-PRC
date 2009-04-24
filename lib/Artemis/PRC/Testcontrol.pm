@@ -149,9 +149,9 @@ method control_testprogram()
         my $program  = $self->cfg->{test_program};
         my $timeout  = $self->cfg->{timeout_testprogram} || 0;
         my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters}; 
-        $timeout = int $timeout;
+        $timeout     = int $timeout;
 
-        # every guest gets its own subdirectory
+        # prepend outdir with guest number if we are in virtualisation guest
         $out_dir.="guest-".$self->{cfg}->{guest_number}."/" if $self->{cfg}->{guest_number};
         
 
@@ -167,7 +167,7 @@ method control_testprogram()
         $program=$progpath.$program if $program !~ m(^/);
 		
         # if exec fails  the error message will go into the output file, thus its best to catch 
-        # many error early to have them printed on the screen
+        # many error early to have them reported back 
         return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
 
         my $output = $out_dir.'Output';
