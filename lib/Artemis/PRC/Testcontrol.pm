@@ -78,7 +78,7 @@ method create_log()
                 my $guest_number=$i+1;
                 my $fifo = "/tmp/guest$guest_number.fifo";
                 if (not -p "$fifo") {
-                        my $error;
+                        my ($error, $retval);
                         rmtree($fifo,{verbose => 0, error => \$error});
                 ERROR:
                         for my $diag (@$error) {
@@ -86,7 +86,7 @@ method create_log()
                                 next ERROR if not $file; # remove inexisting file
                                 return "Can't remove $file:$message\n";
                         }
-                        my ($error, $retval) = $self->log_and_exec("mkfifo",$fifo);
+                        ($error, $retval) = $self->log_and_exec("mkfifo",$fifo);
                         return "Can't create guest console file $fifo: $retval" if $error;
                 }
         }
