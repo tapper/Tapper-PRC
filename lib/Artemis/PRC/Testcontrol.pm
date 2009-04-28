@@ -86,9 +86,9 @@ method create_log()
                                 next ERROR if not $file; # remove inexisting file
                                 return "Can't remove $file:$message\n";
                         }
+                        my ($error, $retval) = $self->log_and_exec("mkfifo",$fifo);
+                        return "Can't create guest console file $fifo: $retval" if $error;
                 }
-                my ($error, $retval) = $self->log_and_exec("mkfifo",$fifo);
-                return "Can't create guest console file $fifo: $retval" if $error;
         }
         return 0;
 };
