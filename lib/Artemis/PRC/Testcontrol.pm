@@ -12,6 +12,9 @@ use Artemis::PRC::Proxy;
 
 extends 'Artemis::PRC';
 
+our $MAXREAD = 1024;  # read that much in one read
+
+
 =head1 NAME
 
 Artemis::PRC::Testcontrol - Control running test programs
@@ -23,6 +26,68 @@ Artemis::PRC::Testcontrol - Control running test programs
 =head1 FUNCTIONS
 
 =cut
+
+=head2 guest_start
+
+Start guest images for virtualisation. Only Xen guests can be started at the
+moment.
+
+@return success - 0
+@return error   - error string
+
+=cut
+
+sub testprogram_execute
+{
+        my ($self, $program, $timeout, $output, @argv) = @_;
+
+        my $progpath         = $self->cfg->{paths}{testprog_path};
+
+
+        # make relative paths absolute
+        $program=$progpath.$program if $program !~ m(^/);
+		
+        # if exec fails  the error message will go into the output file, thus its best to catch 
+        # many error early to have them reported back 
+        return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
+
+        
+
+        $self->log->info("Try to execute test suite $program");
+
+        pipe (my $read, my $write);
+        return ("Can't open pipe:$!") if not (defined $read and defined $write);
+
+        my $pid=fork();
+        return( "fork failed: $!" ) if not defined($pid);
+        
+        if ($pid == 0) {        # hello child
+                close $read;
+                open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output-STDOUT: $!"),exit 1;
+                open (STDERR, ">>$output.stderr") or syswrite($write, "Can't open output file $output-STDERR: $!"),exit 1;
+                exec ($program, @argv) or syswrite($write,"$!\n");
+                close $write;
+                exit -1;
+        } else {
+                # hello parent
+                close $write;
+                our $killed;
+                # (XXX) better create a process group an kill this
+                local $SIG{ALRM}=sub{$killed=1;kill (15,$pid); kill (9,$pid);};
+                alarm ($timeout);
+                waitpid($pid,0);
+                my $retval = $?;
+                alarm(0);
+                return "Killed $program after $timeout seconds" if $killed;
+                if ( $retval ) {
+                        my $error;
+                        sysread($read,$error, $MAXREAD);
+                        return("Executing $program failed:$error");
+                }
+        }
+
+
+}
 
 
 =head2 guest_start
@@ -141,16 +206,11 @@ method control_testprogram()
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
         $ENV{ARTEMIS_GUEST_NUMBER}    = $self->{cfg}->{guest_number} || 0;
 
-        my $MAXREAD = 1024;  # read that much in one read
-
         my $retval;
-        my $test_run = $self->cfg->{test_run};
-        my $out_dir  = $self->cfg->{paths}{output_dir}."/$test_run/test/";
-        my $progpath = $self->cfg->{paths}{testprog_path};
-        my $program  = $self->cfg->{test_program};
-        my $timeout  = $self->cfg->{timeout_testprogram} || 0;
-        my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters}; 
-        $timeout     = int $timeout;
+        my $test_run         = $self->cfg->{test_run};
+        my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
+        my @testprogram_list = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
+        
 
         # prepend outdir with guest number if we are in virtualisation guest
         $out_dir.="guest-".$self->{cfg}->{guest_number}."/" if $self->{cfg}->{guest_number};
@@ -163,50 +223,24 @@ method control_testprogram()
                 return "Can't create $file: $message";
         }
 
-
-        # make relative paths absolute
-        $program=$progpath.$program if $program !~ m(^/);
-		
-        # if exec fails  the error message will go into the output file, thus its best to catch 
-        # many error early to have them reported back 
-        return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
-
         my $output = $out_dir.'Output';
         $ENV{ARTEMIS_OUTPUT_PATH}=$out_dir;
-		
-
-        $self->log->info("Try to execute test suite $program");
-
-	pipe (my $read, my $write);
-	return ("Can't open pipe:$!") if not (defined $read and defined $write);
-
-        my $pid=fork();
-        return( "fork failed: $!" ) if not defined($pid);
         
-        if ($pid == 0) {        # hello child
-                close $read;
-                open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output-STDOUT: $!"),exit 1;
-                open (STDERR, ">>$output.stderr") or syswrite($write, "Can't open output file $output-STDERR: $!"),exit 1;
-                exec ($program, @argv) or syswrite($write,"$!\n");
-                close $write;
-                exit -1;
-        } else {
-                # hello parent
-                close $write;
-                our $killed;
-                # (XXX) better create a process group an kill this
-                local $SIG{ALRM}=sub{$killed=1;kill (15,$pid); kill (9,$pid);};
-                alarm ($timeout);
-                waitpid($pid,0);
-                my $retval = $?;
-                alarm(0);
-                return "Killed $program after $timeout seconds" if $killed;
-		if ( $retval ) {
-                        my $error;
-                        sysread($read,$error, $MAXREAD);
-			return("Executing $program failed:$error");
-		}
+        if ($self->cfg->{test_program}) {
+                my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
+                my $timeout  = $self->cfg->{timeout_testprogram} || 0;
+                $timeout     = int $timeout;
+                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => @argv, timeout => $timeout});
         }
+
+
+        foreach my $testprogram (@testprogram_list) {
+                my @argv   = @{$testprogram->{parameters}} if $testprogram->{parameters} eq "ARRAY"; 
+                my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $output, @argv);
+                
+
+        }
+        
         return(0);
 }
 ;
