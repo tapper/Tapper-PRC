@@ -138,6 +138,7 @@ method control_testprogram()
         $ENV{ARTEMIS_REPORT_API_PORT} = $self->cfg->{report_api_port};
         $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
         $ENV{ARTEMIS_TS_RUNTIME}      = $self->cfg->{runtime};
+        $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
         $ENV{ARTEMIS_GUEST_NUMBER}    = $self->{cfg}->{guest_number} || 0;
 
         my $MAXREAD = 1024;  # read that much in one read
