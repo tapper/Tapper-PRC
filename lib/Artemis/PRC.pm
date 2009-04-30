@@ -117,9 +117,10 @@ Generate the message to be send to MCP and hand it over to mcp_send.
 
 =cut
 
-method mcp_inform(@msg)
+sub mcp_inform
 {
-
+        
+        my ($self, @msg) = @_;
         # prepend PRC number
         if ($self->{cfg}->{guest_number}) {
                 unshift @msg, "prc_number:".$self->{cfg}->{guest_number};
@@ -154,6 +155,24 @@ sub mcp_error
         exit 1;
 };
 
+=head2 mcp_error_hash
+
+Log an error and exit.
+
+@param hash ref - messages to send to MCP
+
+@return success - 0
+@return error   - error string
+
+=cut
+
+sub mcp_error_hash
+{
+
+        my ($self, $error) = @_;
+        $self->log->error($error->{error});
+        $self->mcp_inform("testprogram $error->{testprogram},error-testprogram:$error->{error}");
+};
 
 
 1;
