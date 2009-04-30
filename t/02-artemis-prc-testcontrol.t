@@ -12,7 +12,7 @@ use Artemis::Schema::TestTools;
 
 
 
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 my $config_bkup = 't/files/artemis.backup';
 
@@ -133,6 +133,11 @@ if ($pid==0) {
                         $content[2].=$line;
                 }
 
+                $msg_sock = $server->accept();
+                while (my $line=<$msg_sock>) {
+                        $content[3].=$line;
+                }
+
 
                 alarm(0);
         };
@@ -142,10 +147,11 @@ if ($pid==0) {
         my @msg = ("prc_number:0,start-testing\n",
                    "prc_number:0,testprogram 0,end-testprogram\n",
                    "prc_number:0,testprogram 1,error-testprogram:",
-                   "prc_number:0,start-testing\n");
+                   "prc_number:0,end-testing\n");
         is(  $content[0],    $msg[0],  'Receiving start message');
         is(  $content[1],    $msg[1],  'First test script message');
         like($content[2], qr($msg[2]), 'Second test script message');
+        is(  $content[3],    $msg[3],  'Finished test');
 }
 
 
