@@ -27,10 +27,14 @@ Artemis::PRC::Testcontrol - Control running test programs
 
 =cut
 
-=head2 guest_start
+=head2 testprogram_execute
 
-Start guest images for virtualisation. Only Xen guests can be started at the
-moment.
+Execute one testprogram. Handle all error conditions.
+
+@param string - program name
+@param int    - timeout
+@param string - output directory
+@param array of strings - parameters for test program
 
 @return success - 0
 @return error   - error string
@@ -39,10 +43,13 @@ moment.
 
 sub testprogram_execute
 {
-        my ($self, $program, $timeout, $output, @argv) = @_;
+        my ($self, $program, $timeout, $out_dir, @argv) = @_;
 
-        my $progpath         = $self->cfg->{paths}{testprog_path};
-
+        my $progpath =  $self->cfg->{paths}{testprog_path};
+        my $output   =  $program;
+        $output      =~ s|[^A-Za-z0-9_-]|_|g;
+        $output      =  $out_dir.$output;
+        
 
         # make relative paths absolute
         $program=$progpath.$program if $program !~ m(^/);
@@ -50,6 +57,7 @@ sub testprogram_execute
         # if exec fails  the error message will go into the output file, thus its best to catch 
         # many error early to have them reported back 
         return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
+        
 
         
 
@@ -63,8 +71,8 @@ sub testprogram_execute
         
         if ($pid == 0) {        # hello child
                 close $read;
-                open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output-STDOUT: $!"),exit 1;
-                open (STDERR, ">>$output.stderr") or syswrite($write, "Can't open output file $output-STDERR: $!"),exit 1;
+                open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
+                open (STDERR, ">>$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
                 exec ($program, @argv) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
@@ -85,8 +93,7 @@ sub testprogram_execute
                         return("Executing $program failed:$error");
                 }
         }
-
-
+        return 0;
 }
 
 
@@ -100,8 +107,9 @@ moment.
 
 =cut
 
-method guest_start
+sub guest_start
 {
+        my ($self) = @_;
         my $retval;
         for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
                 my $guest = $self->cfg->{guests}->[$i];
@@ -125,7 +133,7 @@ method guest_start
                 }
         }
         return 0;
-};
+}
 
 =head2 create_log
 
@@ -137,8 +145,9 @@ not. Existing files of wrong type are deleted.
 
 =cut
 
-method create_log()
+sub create_log
 {
+        my ($self) = @_;
         for(my $i=0; $i <= $#{$self->cfg->{guests}}; $i++) {
                 my $guest_number=$i+1;
                 my $fifo = "/tmp/guest$guest_number.fifo";
@@ -156,7 +165,7 @@ method create_log()
                 }
         }
         return 0;
-};
+}
 
 
 
@@ -170,8 +179,9 @@ only want to mount this NFS share in live mode.
 
 =cut
 
-method nfs_mount
+sub nfs_mount
 {
+        my ($self) = @_;
         my ($error, $retval);
         File::Path->mkpath($self->cfg->{paths}{prc_nfs_mountdir}, {error => \$error}) if not -d $self->cfg->{paths}{prc_nfs_mountdir};
         foreach my $diag (@$error) {
@@ -182,8 +192,7 @@ method nfs_mount
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
         return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$retval" if $error;
         return 0;
-};
-
+}
 
 =head2 control_testprogram
 
@@ -195,8 +204,9 @@ the environment variables some testers asked for.
 
 =cut
 
-method control_testprogram()
+sub control_testprogram
 { 
+        my ($self) = @_;
         $ENV{ARTEMIS_TESTRUN}         = $self->cfg->{test_run};
         $ENV{ARTEMIS_SERVER}          = $self->cfg->{mcp_server};
         $ENV{ARTEMIS_REPORT_SERVER}   = $self->cfg->{report_server};
@@ -223,7 +233,6 @@ method control_testprogram()
                 return "Can't create $file: $message";
         }
 
-        my $output = $out_dir.'Output';
         $ENV{ARTEMIS_OUTPUT_PATH}=$out_dir;
         
         if ($self->cfg->{test_program}) {
@@ -234,16 +243,24 @@ method control_testprogram()
         }
 
 
-        foreach my $testprogram (@testprogram_list) {
-                my @argv   = @{$testprogram->{parameters}} if $testprogram->{parameters} eq "ARRAY"; 
-                my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $output, @argv);
-                
+        for (my $i=0; $i<=$#testprogram_list; $i++) {
+                my $testprogram =  $testprogram_list[$i];
+                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and $testprogram->{parameters} eq "ARRAY"; 
+                my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
+
+                if ($retval) {
+                        $self->mcp_error_hash({testprogram => $i, error => $retval});
+                        $self->log->info("Error while executing $testprogram->{program}: $retval");
+                } else {
+                        $self->mcp_inform("testprogram $i,end-testprogram");
+                        $self->log->info("Successfully finished test suite $testprogram->{program}");
+                }
 
         }
         
         return(0);
 }
-;
+
 
 =head2 run
 
@@ -256,9 +273,9 @@ starting the guests (if any) and to call test control functions.
 
 =cut
 
-method run()
+sub run
 {
-
+        my ($self) = @_;
         my $retval;
         my $config_file_name = '/etc/artemis';
         $config_file_name = $ENV{ARTEMIS_CONFIG} if $ENV{ARTEMIS_CONFIG};
@@ -312,16 +329,9 @@ method run()
 
         }
 
-        $retval = $self->mcp_inform('start-testprogram') if not $self->cfg->{reboot_counter};
+        $retval = $self->mcp_inform('start-testing') if not $self->cfg->{reboot_counter};
 
-        if ($self->cfg->{test_program}) {
-                $retval = $self->control_testprogram();
-                if ($retval) {
-                        $self->mcp_error($retval);
-                } else {
-                        $self->log->info("Successfully finished test suite ".$self->cfg->{test_program});
-                }
-        }
+        $retval = $self->control_testprogram() if $self->cfg->{test_program} or $self->cfg->{testprogram_list};
 
         if ($self->cfg->{max_reboot}) {
                 $self->mcp_inform("reboot:".$self->cfg->{reboot_counter},$self->cfg->{max_reboot}); # mcp_inform joins messages with comma
@@ -335,10 +345,10 @@ method run()
         }
 
 
-        $retval = $self->mcp_inform('end-testprogram');
+        $retval = $self->mcp_inform('end-testing');
         
 
-};
+}
 
 1;
 
