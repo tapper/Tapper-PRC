@@ -5,13 +5,14 @@ use warnings;
 
 use IO::Socket::INET;
 use Method::Signatures;
+use YAML::Syck;
 use Artemis::Config;
 use Moose;
 use Log::Log4perl;
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000022';
+our $VERSION = '2.000023';
 
 =head1 NAME
 
@@ -87,23 +88,23 @@ Tell the MCP server our current status. This is done using a TCP connection.
 
 =cut
 
-method mcp_send($message)
+sub mcp_send
 {
+        my ($self, $message) = @_;
         my $server = $self->cfg->{mcp_server} or return "MCP host unknown";
         my $port   = $self->cfg->{port} || 7357;
 
-        $self->log->info(qq(Sending status message "$message" to MCP host "$server"));
-
+        my $yaml = Dump($message);
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
 					     PeerPort => $port,
 					     Proto    => 'tcp')){
-		print $sock ("$message\n");
+		print $sock ("$yaml");
 		close $sock;
 	} else {
                 return("Can't connect to MCP: $!");
 	}
         return(0);
-};
+}
 
 
 =head2 mcp_inform
@@ -120,17 +121,16 @@ Generate the message to be send to MCP and hand it over to mcp_send.
 sub mcp_inform
 {
         
-        my ($self, @msg) = @_;
-        # prepend PRC number
+        my ($self, $msg) = @_;
+        return "$msg is not a hash" if not ref($msg) eq 'HASH';
+
+        # set PRC number
         if ($self->{cfg}->{guest_number}) {
-                unshift @msg, "prc_number:".$self->{cfg}->{guest_number};
+                $msg->{prc_number} = $self->{cfg}->{guest_number};
         } else {
                 # guest numbers start with 1, 0 is host or no virtualisation
-                unshift @msg, "prc_number:0"; 
+                $msg->{prc_number} = 0;
         }
-
-        my $msg=join ',', @msg;
-
         return $self->mcp_send($msg);
 };
 
@@ -151,29 +151,10 @@ sub mcp_error
 
         my ($self, $error) = @_;
         $self->log->error($error);
-        $self->mcp_inform("error-testprogram:$error");
+        my $retval = $self->mcp_inform({status => 'error-testprogram', error => $error});
+        $self->log->error($retval) if $retval;
         exit 1;
 };
-
-=head2 mcp_error_hash
-
-Log an error and exit.
-
-@param hash ref - messages to send to MCP
-
-@return success - 0
-@return error   - error string
-
-=cut
-
-sub mcp_error_hash
-{
-
-        my ($self, $error) = @_;
-        $self->log->error($error->{error});
-        $self->mcp_inform("testprogram $error->{testprogram},error-testprogram:$error->{error}");
-};
-
 
 1;
 
