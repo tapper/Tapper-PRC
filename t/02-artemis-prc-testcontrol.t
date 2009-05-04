@@ -81,12 +81,12 @@ if ($pid==0) {
 
                 alarm(0);
         };
-        is($@, '', 'Get status messages in time');
+        is($@, '', 'Get state messages in time');
         waitpid($pid,0);
 
-        my @msg = ({prc_number => 0, status => "start-testing"},
-                   {prc_number => 0, status => 'reboot', count => 0, max_reboot => 2},
-                   {prc_number => 0, status => 'reboot', count => 1, max_reboot => 2});
+        my @msg = ({prc_number => 0, state => "start-testing"},
+                   {prc_number => 0, state => 'reboot', count => 0, max_reboot => 2},
+                   {prc_number => 0, state => 'reboot', count => 1, max_reboot => 2});
         is_deeply(Load($content[0]), $msg[0], 'Receiving start message');
         is_deeply(Load($content[1]), $msg[1], 'First reboot message');
         is_deeply(Load($content[2]), $msg[2], 'Second reboot message');
@@ -97,7 +97,7 @@ is ($config->{reboot_counter}, 2, "Writing reboot count back to config");
 
 ########################################################
 #
-# Test status messages for multiple test scripts
+# Test state messages for multiple test scripts
 #
 ########################################################
 
@@ -141,13 +141,13 @@ if ($pid==0) {
 
                 alarm(0);
         };
-        is($@, '', 'Get status messages in time');
+        is($@, '', 'Get state messages in time');
         waitpid($pid,0);
 
-        my @msg = ({prc_number => 0, status => "start-testing"},
-                   {prc_number => 0, status => "end-testprogram", testprogram => 0},
-                   {prc_number => 0, testprogram => 1, status => "error-testprogram"},
-                   {prc_number => 0, status => "end-testing"});
+        my @msg = ({prc_number => 0, state => "start-testing"},
+                   {prc_number => 0, state => "end-testprogram", testprogram => 0},
+                   {prc_number => 0, testprogram => 1, state => "error-testprogram"},
+                   {prc_number => 0, state => "end-testing"});
 
         # error msg depends on language setting, thus we don't check it, in case it exists
         my $tmp = Load($content[2]);

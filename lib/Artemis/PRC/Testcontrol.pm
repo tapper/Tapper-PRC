@@ -119,7 +119,7 @@ sub guest_start
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
-                                $self->mcp_send({prc_number => ($i+1), status => 'error-guest', error => $retval});
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
                                 return $retval;
                         }
                 } elsif ($guest->{svm}){
@@ -127,7 +127,7 @@ sub guest_start
                         print STDERR "Artemis::PRC::Testcontrol: xm create ",$guest->{svm},"\n";
                         if (not (system("xm","create",$guest->{svm}) == 0)) {
                                 $retval = "Can't start xen guest described in $guest->{svm}";
-                                $self->mcp_send({prc_number => ($i+1), status => 'error-guest', error => $retval});
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
                                 return $retval;
                         }  
                 }
@@ -249,10 +249,10 @@ sub control_testprogram
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
-                        $self->mcp_inform({testprogram => $i, status => 'error-testprogram', error => $retval});
+                        $self->mcp_inform({testprogram => $i, state => 'error-testprogram', error => $retval});
                         $self->log->info("Error while executing $testprogram->{program}: $retval");
                 } else {
-                        $self->mcp_inform({testprogram => $i , status => 'end-testprogram'});
+                        $self->mcp_inform({testprogram => $i , state => 'end-testprogram'});
                         $self->log->info("Successfully finished test suite $testprogram->{program}");
                 }
 
@@ -267,7 +267,7 @@ sub control_testprogram
 Main function of Program Run Control. When used in virtualisation environment,
 a proxy is created in a child process. The parent process waits until the
 proxy sends a "ready" message through the pipe provided as
-$self->cfg->{syncwrite} in the proxy. When this status is received or the
+$self->cfg->{syncwrite} in the proxy. When this state is received or the
 function is called in a test without virtualisation, it continues with
 starting the guests (if any) and to call test control functions.
 
@@ -307,7 +307,7 @@ sub run
                         close $read;
 
                         $config->{server} = $config->{mcp_server};
-                        # proxy collects status messages from guests and sends reports with more
+                        # proxy collects state messages from guests and sends reports with more
                         # information to MCP
                         my $proxy = Artemis::PRC::Proxy->new($config);
                         $retval = $proxy->run;
@@ -322,19 +322,19 @@ sub run
                         close $write;
                         # wait for proxy, ignore the message 
                         <$read>;
-                        # report testprogram status to Proxy
+                        # report testprogram state to Proxy
                         $retval = $self->guest_start();
                         $self->log->error($retval) if $retval;
                 }
 
         }
 
-        $retval = $self->mcp_inform({status => 'start-testing'}) if not $self->cfg->{reboot_counter};
+        $retval = $self->mcp_inform({state => 'start-testing'}) if not $self->cfg->{reboot_counter};
 
         $retval = $self->control_testprogram() if $self->cfg->{test_program} or $self->cfg->{testprogram_list};
 
         if ($self->cfg->{max_reboot}) {
-                $self->mcp_inform({status => 'reboot', count => $self->cfg->{reboot_counter}, max_reboot => $self->cfg->{max_reboot}});
+                $self->mcp_inform({state => 'reboot', count => $self->cfg->{reboot_counter}, max_reboot => $self->cfg->{max_reboot}});
                 if ($self->cfg->{reboot_counter} < $self->cfg->{max_reboot}) {
                         $self->cfg->{reboot_counter}++;
                         YAML::Syck::DumpFile($config_file_name, $self->{cfg}) or $self->mcp_error("Can't write config to file: $!");
@@ -345,7 +345,7 @@ sub run
         }
 
 
-        $retval = $self->mcp_inform({status => 'end-testing'});
+        $retval = $self->mcp_inform({state => 'end-testing'});
         
 
 }
