@@ -119,7 +119,7 @@ sub guest_start
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
-                                $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
+                                $self->mcp_send({prc_number => ($i+1), status => 'error-guest', error => $retval});
                                 return $retval;
                         }
                 } elsif ($guest->{svm}){
@@ -127,7 +127,7 @@ sub guest_start
                         print STDERR "Artemis::PRC::Testcontrol: xm create ",$guest->{svm},"\n";
                         if (not (system("xm","create",$guest->{svm}) == 0)) {
                                 $retval = "Can't start xen guest described in $guest->{svm}";
-                                $self->mcp_send("prc_number:".($i+1).",error-testprogram:$retval");
+                                $self->mcp_send({prc_number => ($i+1), status => 'error-guest', error => $retval});
                                 return $retval;
                         }  
                 }
@@ -249,10 +249,10 @@ sub control_testprogram
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
-                        $self->mcp_error_hash({testprogram => $i, error => $retval});
+                        $self->mcp_inform({testprogram => $i, status => 'error-testprogram', error => $retval});
                         $self->log->info("Error while executing $testprogram->{program}: $retval");
                 } else {
-                        $self->mcp_inform("testprogram $i,end-testprogram");
+                        $self->mcp_inform({testprogram => $i , status => 'end-testprogram'});
                         $self->log->info("Successfully finished test suite $testprogram->{program}");
                 }
 
@@ -329,12 +329,12 @@ sub run
 
         }
 
-        $retval = $self->mcp_inform('start-testing') if not $self->cfg->{reboot_counter};
+        $retval = $self->mcp_inform({status => 'start-testing'}) if not $self->cfg->{reboot_counter};
 
         $retval = $self->control_testprogram() if $self->cfg->{test_program} or $self->cfg->{testprogram_list};
 
         if ($self->cfg->{max_reboot}) {
-                $self->mcp_inform("reboot:".$self->cfg->{reboot_counter},$self->cfg->{max_reboot}); # mcp_inform joins messages with comma
+                $self->mcp_inform({status => 'reboot', count => $self->cfg->{reboot_counter}, max_reboot => $self->cfg->{max_reboot}});
                 if ($self->cfg->{reboot_counter} < $self->cfg->{max_reboot}) {
                         $self->cfg->{reboot_counter}++;
                         YAML::Syck::DumpFile($config_file_name, $self->{cfg}) or $self->mcp_error("Can't write config to file: $!");
@@ -345,7 +345,7 @@ sub run
         }
 
 
-        $retval = $self->mcp_inform('end-testing');
+        $retval = $self->mcp_inform({status => 'end-testing'});
         
 
 }
