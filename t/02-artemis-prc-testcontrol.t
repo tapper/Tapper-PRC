@@ -5,11 +5,11 @@ use warnings;
 
 use Test::MockModule;
 use File::Temp qw/ :seekable /;
+use YAML::Syck;
 
 
 use Artemis::Model 'model';
 use Artemis::Schema::TestTools;
-
 
 
 use Test::More tests => 12;
@@ -84,12 +84,12 @@ if ($pid==0) {
         is($@, '', 'Get status messages in time');
         waitpid($pid,0);
 
-        my @msg = ("prc_number:0,start-testing\n",
-                   "prc_number:0,reboot:0,2\n",
-                   "prc_number:0,reboot:1,2\n");
-        is($content[0], $msg[0], 'Receiving start message');
-        is($content[1], $msg[1], 'First reboot message');
-        is($content[2], $msg[2], 'Second reboot message');
+        my @msg = ({prc_number => 0, status => "start-testing"},
+                   {prc_number => 0, status => 'reboot', count => 0, max_reboot => 2},
+                   {prc_number => 0, status => 'reboot', count => 1, max_reboot => 2});
+        is_deeply(Load($content[0]), $msg[0], 'Receiving start message');
+        is_deeply(Load($content[1]), $msg[1], 'First reboot message');
+        is_deeply(Load($content[2]), $msg[2], 'Second reboot message');
 }
 
 my $config = YAML::Syck::LoadFile($config_file) or die("Can't read config file $config_file: $!");
@@ -144,14 +144,20 @@ if ($pid==0) {
         is($@, '', 'Get status messages in time');
         waitpid($pid,0);
 
-        my @msg = ("prc_number:0,start-testing\n",
-                   "prc_number:0,testprogram 0,end-testprogram\n",
-                   "prc_number:0,testprogram 1,error-testprogram:",
-                   "prc_number:0,end-testing\n");
-        is(  $content[0],    $msg[0],  'Receiving start message');
-        is(  $content[1],    $msg[1],  'First test script message');
-        like($content[2], qr($msg[2]), 'Second test script message');
-        is(  $content[3],    $msg[3],  'Finished test');
+        my @msg = ({prc_number => 0, status => "start-testing"},
+                   {prc_number => 0, status => "end-testprogram", testprogram => 0},
+                   {prc_number => 0, testprogram => 1, status => "error-testprogram"},
+                   {prc_number => 0, status => "end-testing"});
+
+        # error msg depends on language setting, thus we don't check it, in case it exists
+        my $tmp = Load($content[2]);
+        $msg[2]->{error} = $tmp->{error} if $tmp->{error};
+
+
+        is_deeply(Load($content[0]), $msg[0], 'Receiving start message');
+        is_deeply(Load($content[1]), $msg[1], 'First test script message');
+        is_deeply(Load($content[2]), $msg[2], 'Second test script message');
+        is_deeply(Load($content[3]), $msg[3], 'Finished test');
 }
 
 
