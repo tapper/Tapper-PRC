@@ -5,6 +5,7 @@ use warnings;
 
 use Test::MockModule;
 use Test::MockClass;
+use YAML::Syck;
 
 use Artemis::Model 'model';
 use Artemis::Schema::TestTools;
@@ -35,7 +36,7 @@ $prc->{cfg} = {mcp_server => 'localhost', port => 1337};
 my $pid=fork();
 if ($pid==0) {
         sleep(2); #bad and ugly to prevent race condition
-        $prc->mcp_inform("test1","test2");
+        $prc->mcp_inform({state => "test"});
 
         exit 0;
 } else {
@@ -54,8 +55,8 @@ if ($pid==0) {
         };
         is($@, '', 'Getting data from file upload');
 
-        my $msg = "prc_number:0,test1,test2\n";
-        is($content, $msg, 'sending message to server, no virtualisation');
+        my $msg = Load($content);
+        is_deeply($msg, {prc_number => 0, state => "test"}, 'sending message to server, no virtualisation');
 
         waitpid($pid,0);
 }
