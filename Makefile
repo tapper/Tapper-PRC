@@ -11,7 +11,7 @@ live:
 	ssh artemis@bancroft "cd ${MOUNT64}; sudo rsync -ruv  ${SOURCE_DIR} ${DEST_DIR}; sudo tar -czf ${PKG_DIR}/opt-artemis64.tar.gz opt/"
 	ssh artemis@bancroft "cd ${MOUNT32}; sudo rsync -ruv  ${SOURCE_DIR} ${DEST_DIR}; sudo tar -czf ${PKG_DIR}/opt-artemis32.tar.gz opt/"
 devel:
-#	./scripts/dist_upload_wotan.sh
+	./scripts/dist_upload_wotan.sh
 
 	ssh artemis@bancroft "sudo mv ${MOUNT64}/opt ${MOUNT64}/opt.live; sudo mv ${MOUNT64}/opt.devel ${MOUNT64}/opt;"
 	ssh artemis@bancroft "cd ${MOUNT64}; sudo rsync -ruv ${SOURCE_DIR} ${DEST_DIR}; sudo tar -czf ${PKG_DIR}/opt-artemis64_devel.tar.gz opt/"
