@@ -12,7 +12,7 @@ use Log::Log4perl;
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000023';
+our $VERSION = '2.000024';
 
 =head1 NAME
 
@@ -111,7 +111,7 @@ sub mcp_send
 
 Generate the message to be send to MCP and hand it over to mcp_send.
 
-@param array of strings - messages to send to MCP
+@param hash reference - message to send to MCP
 
 @return success - 0
 @return error   - error string
