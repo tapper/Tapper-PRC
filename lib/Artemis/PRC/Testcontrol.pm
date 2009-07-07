@@ -9,6 +9,7 @@ use Method::Signatures;
 use Moose;
 
 use Artemis::PRC::Proxy;
+use Artemis::PRC::Config;
 
 extends 'Artemis::PRC';
 
@@ -277,10 +278,8 @@ sub run
 {
         my ($self) = @_;
         my $retval;
-        my $config_file_name = '/etc/artemis';
-        $config_file_name = $ENV{ARTEMIS_CONFIG} if $ENV{ARTEMIS_CONFIG};
-
-        my $config = YAML::Syck::LoadFile($config_file_name) or $self->log->logdie("Can't read config file $config_file_name: $!");
+        my $producer = Artemis::PRC::Config->new();
+        my $config = $producer->get_local_data("test-prc0");
         $self->{cfg} = $config;
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
@@ -337,7 +336,7 @@ sub run
                 $self->mcp_inform({state => 'reboot', count => $self->cfg->{reboot_counter}, max_reboot => $self->cfg->{max_reboot}});
                 if ($self->cfg->{reboot_counter} < $self->cfg->{max_reboot}) {
                         $self->cfg->{reboot_counter}++;
-                        YAML::Syck::DumpFile($config_file_name, $self->{cfg}) or $self->mcp_error("Can't write config to file: $!");
+                        YAML::Syck::DumpFile($config->{filename}, $self->{cfg}) or $self->mcp_error("Can't write config to file: $!");
                         $self->log_and_exec("reboot");
                         return 0;
                 }
