@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Test::MockModule;
-use Test::MockClass;
 use YAML::Syck;
 
 use Artemis::Model 'model';
