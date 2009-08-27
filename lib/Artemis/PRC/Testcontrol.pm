@@ -50,17 +50,17 @@ sub testprogram_execute
         my $output   =  $program;
         $output      =~ s|[^A-Za-z0-9_-]|_|g;
         $output      =  $out_dir.$output;
-        
+
 
         # make relative paths absolute
         $program=$progpath.$program if $program !~ m(^/);
-		
-        # if exec fails  the error message will go into the output file, thus its best to catch 
-        # many error early to have them reported back 
-        return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
-        
 
-        
+        # if exec fails  the error message will go into the output file, thus its best to catch
+        # many error early to have them reported back
+        return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
+
+
+
 
         $self->log->info("Try to execute test suite $program");
 
@@ -69,7 +69,7 @@ sub testprogram_execute
 
         my $pid=fork();
         return( "fork failed: $!" ) if not defined($pid);
-        
+
         if ($pid == 0) {        # hello child
                 close $read;
                 open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
@@ -130,7 +130,7 @@ sub guest_start
                                 $retval = "Can't start xen guest described in $guest->{svm}";
                                 $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
                                 return $retval;
-                        }  
+                        }
                 }
         }
         return 0;
@@ -198,7 +198,7 @@ sub nfs_mount
 =head2 control_testprogram
 
 Control running of one program including caring for its input, output and
-the environment variables some testers asked for. 
+the environment variables some testers asked for.
 
 @return success - 0
 @return error   - error string
@@ -206,7 +206,7 @@ the environment variables some testers asked for.
 =cut
 
 sub control_testprogram
-{ 
+{
         my ($self) = @_;
         $ENV{ARTEMIS_TESTRUN}         = $self->cfg->{test_run};
         $ENV{ARTEMIS_SERVER}          = $self->cfg->{mcp_server};
@@ -221,11 +221,11 @@ sub control_testprogram
         my $test_run         = $self->cfg->{test_run};
         my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
         my @testprogram_list = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
-        
+
 
         # prepend outdir with guest number if we are in virtualisation guest
         $out_dir.="guest-".$self->{cfg}->{guest_number}."/" if $self->{cfg}->{guest_number};
-        
+
 
         mkpath($out_dir, {error => \$retval}) if not -d $out_dir;
         foreach my $diag (@$retval) {
@@ -235,7 +235,7 @@ sub control_testprogram
         }
 
         $ENV{ARTEMIS_OUTPUT_PATH}=$out_dir;
-        
+
         if ($self->cfg->{test_program}) {
                 my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
@@ -246,7 +246,12 @@ sub control_testprogram
 
         for (my $i=0; $i<=$#testprogram_list; $i++) {
                 my $testprogram =  $testprogram_list[$i];
-                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and $testprogram->{parameters} eq "ARRAY"; 
+
+                # unify differences in program vs. program_list vs. virt
+                $testprogram->{program} ||= $testprogram->{test_program};
+                $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
+
+                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and $testprogram->{parameters} eq "ARRAY";
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
@@ -258,7 +263,7 @@ sub control_testprogram
                 }
 
         }
-        
+
         return(0);
 }
 
@@ -291,7 +296,7 @@ sub run
 
 
         if ($self->{cfg}->{guest_count}) {
-                
+
                 $config->{prc_count} = $config->{guest_count} + 1; # always have a PRC in host
 
                 my ($read, $write);
@@ -316,10 +321,10 @@ sub run
                                 exit -1;
                         }
                         exit 0;
-                        
+
                 } else {
                         close $write;
-                        # wait for proxy, ignore the message 
+                        # wait for proxy, ignore the message
                         <$read>;
                         # report testprogram state to Proxy
                         $retval = $self->guest_start();
@@ -345,7 +350,7 @@ sub run
 
 
         $retval = $self->mcp_inform({state => 'end-testing'});
-        
+
 
 }
 
