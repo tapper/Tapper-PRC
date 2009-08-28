@@ -88,23 +88,23 @@ sub get_local_data
 {
         my ($self, $state) = @_;
         # logger will usually be initialised by caller
-        my $hostname;
         my $tmpcfg={};
 
         my $config_file_name = '/etc/artemis';
         $config_file_name = $ENV{ARTEMIS_CONFIG} if $ENV{ARTEMIS_CONFIG};
         if (not -e $config_file_name) {
-                $hostname      = $self->gethostname();
+                my $hostname;
+                $hostname           = $self->gethostname();
                 my ($server, $port) = $self->get_artemis_host();
-                my $tftp          = Net::TFTP->new($server);
+                my $tftp            = Net::TFTP->new($server);
                 $tftp->get("$hostname-$state", $config_file_name) or return("Can't get local data.",$tftp->error);
-                $tmpcfg->{server} = $server;
-                $tmpcfg->{port}   = $port;
+                $tmpcfg->{server}   = $server;
+                $tmpcfg->{port}     = $port;
+                $tmpcfg->{hostname} = $hostname;
         }
 
         my $config = YAML::Syck::LoadFile($config_file_name) or return ("Can't parse config received from server");
         $config->{filename} = $config_file_name;
-        $config->{hostname} = $hostname;
         %$config=(%$config, %$tmpcfg);
 
         return $config;
