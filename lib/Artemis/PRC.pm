@@ -12,7 +12,7 @@ use Log::Log4perl;
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000033';
+our $VERSION = '2.000035';
 
 =head1 NAME
 
