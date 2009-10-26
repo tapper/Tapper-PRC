@@ -117,6 +117,7 @@ sub guest_start
                 if ($guest->{exec}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
+                        system ("chmod", "ugo+x", $startscript); # just try to set it executable always
                         return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
