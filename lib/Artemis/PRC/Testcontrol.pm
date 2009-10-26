@@ -117,7 +117,13 @@ sub guest_start
                 if ($guest->{exec}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
-                        return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
+                        if (not -s $startscript) {
+                                return qq(Startscript "$startscript" is empty or does not exist at all)
+                        } else {
+                                # just try to set it executable always
+                                system ("chmod", "ugo+x", $startscript) if not -x $startscript;
+                                return qq(Unable to set executable bit on "$startscript": $!);
+                        }
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
                                 $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
@@ -215,6 +221,8 @@ sub control_testprogram
         $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
         $ENV{ARTEMIS_TS_RUNTIME}      = $self->cfg->{runtime};
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
+        $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if $self->cfg->{reboot_counter};
+        $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
         $ENV{ARTEMIS_GUEST_NUMBER}    = $self->{cfg}->{guest_number} || 0;
 
         my $retval;
