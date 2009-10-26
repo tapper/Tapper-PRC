@@ -4,11 +4,11 @@ use strict;
 use warnings;
 
 use IO::Socket::INET;
-use Method::Signatures;
 use YAML::Syck;
-use Artemis::Config;
 use Moose;
 use Log::Log4perl;
+
+use Artemis::Base;
 
 with 'MooseX::Log::Log4perl';
 
@@ -95,6 +95,7 @@ sub mcp_send
         my $port   = $self->cfg->{port} || 7357;
 
         my $yaml = Dump($message);
+        
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
 					     PeerPort => $port,
 					     Proto    => 'tcp')){
