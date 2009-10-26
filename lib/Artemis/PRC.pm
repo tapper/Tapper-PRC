@@ -8,7 +8,7 @@ use YAML::Syck;
 use Moose;
 use Log::Log4perl;
 
-extends Artemis::Base;
+extends 'Artemis::Base';
 
 with 'MooseX::Log::Log4perl';
 
@@ -32,7 +32,13 @@ has cfg => (is      => 'rw',
            );
 
 BEGIN {
-	Log::Log4perl::init(Artemis::Config->subconfig->{files}{log4perl_cfg}); # ss5 2009-09-23
+        # hardcoding these values reduces dependancy on Artemis::Config and is
+        # bearable since it never really changes
+        my $logconf = 'log4perl.cfg';
+        if ($ENV{HARNESS_ACTIVE}) {
+           $logconf = 'log4perl_test.cfg';
+        }
+	Log::Log4perl::init($logconf);
 }
 
 =head2 mcp_send
