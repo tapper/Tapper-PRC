@@ -117,8 +117,13 @@ sub guest_start
                 if ($guest->{exec}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
-                        system ("chmod", "ugo+x", $startscript); # just try to set it executable always
-                        return qq(Startscript "$startscript" is not an executable or does not exist at all) if not -x $startscript;
+                        if (not -s $startscript) {
+                                return qq(Startscript "$startscript" is empty or does not exist at all)
+                        } else {
+                                # just try to set it executable always
+                                system ("chmod", "ugo+x", $startscript) if not -x $startscript;
+                                return qq(Unable to set executable bit on "$startscript": $!);
+                        }
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
                                 $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
