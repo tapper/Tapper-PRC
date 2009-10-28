@@ -293,6 +293,8 @@ sub run
         my $retval;
         my $producer = Artemis::PRC::Config->new();
         my $config = $producer->get_local_data("test-prc0");
+        $self->log->logdie($config) if not ref $config eq 'HASH';
+
         $self->{cfg} = $config;
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
