@@ -104,8 +104,10 @@ sub get_local_data
         }
 
         my $config = YAML::Syck::LoadFile($config_file_name) or return ("Can't parse config received from server");
+        $config->{port}     ||= ($config->{mcp_port} || $tmpcfg->{port});
+        $config->{mcp_host} ||= $config->{mcp_server};
         $config->{filename} = $config_file_name;
-        %$config=(%$config, %$tmpcfg);
+        %$config=(%$tmpcfg, %$config);   # $config can overwrite $tmpcfg options
 
         return $config;
 }
