@@ -296,7 +296,7 @@ sub run
         $self->log->logdie($config) if not ref $config eq 'HASH';
 
         $self->{cfg} = $config;
-        $self->comfile($config);
+        $self->set_comfile($config);
 
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
