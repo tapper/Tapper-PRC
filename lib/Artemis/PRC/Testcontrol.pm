@@ -221,8 +221,8 @@ sub control_testprogram
         $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
         $ENV{ARTEMIS_TS_RUNTIME}      = $self->cfg->{runtime};
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
-        $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if $self->cfg->{reboot_counter};
-        $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
+        $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if defined $self->cfg->{reboot_counter};
+        $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if defined $self->cfg->{max_reboot};
         $ENV{ARTEMIS_GUEST_NUMBER}    = $self->{cfg}->{guest_number} || 0;
 
         my $retval;
@@ -293,8 +293,11 @@ sub run
         my $retval;
         my $producer = Artemis::PRC::Config->new();
         my $config = $producer->get_local_data("test-prc0");
-        $self->comfile($config);
+        $self->log->logdie($config) if not ref $config eq 'HASH';
+
         $self->{cfg} = $config;
+        $self->comfile($config);
+
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
         if ($config->{prc_nfs_server}) {
