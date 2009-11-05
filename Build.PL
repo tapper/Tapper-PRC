@@ -25,6 +25,7 @@ my $builder = $build_class->new
                         'Test::MockModule'            => 0,
                         'Test::More'                  => 0,
                         'Artemis::Test'               => '2.010005',
+                        'Artemis::Config'             => '2.010053',
                        },
      requires => {
                   'perl'                        => '5.010',
@@ -32,6 +33,8 @@ my $builder = $build_class->new
                   'Moose'                       => 0,
                   'Log::Log4perl'               => 0,
                   'List::Util'                  => 0,
+                  'IO::Socket::INET'            => 0,
+                  'IO::Select'                  => 0,
                   'IPC::Open3'                  => 0,
                   'File::Path'                  => 0,
                  },
