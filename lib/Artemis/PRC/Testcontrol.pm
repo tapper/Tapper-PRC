@@ -221,7 +221,7 @@ sub control_testprogram
         $ENV{ARTEMIS_REPORT_SERVER}   = $self->cfg->{report_server};
         $ENV{ARTEMIS_REPORT_API_PORT} = $self->cfg->{report_api_port};
         $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
-        $ENV{ARTEMIS_TS_RUNTIME}      = $self->cfg->{runtime};
+        $ENV{ARTEMIS_TS_RUNTIME}      = int ($self->cfg->{runtime} || 0);
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
         $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if defined $self->cfg->{reboot_counter};
         $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if defined $self->cfg->{max_reboot};
