@@ -4,11 +4,11 @@ use strict;
 use warnings;
 
 use IO::Socket::INET;
-use Method::Signatures;
 use YAML::Syck;
-use Artemis::Config;
 use Moose;
 use Log::Log4perl;
+
+extends 'Artemis::Base';
 
 with 'MooseX::Log::Log4perl';
 
@@ -32,50 +32,14 @@ has cfg => (is      => 'rw',
            );
 
 BEGIN {
-	Log::Log4perl::init(Artemis::Config->subconfig->{files}{log4perl_cfg}); # ss5 2009-09-23
-}
-
-=head2 log_and_exec
-
-Execute a given command. Make sure the command is logged if requested and none
-of its output pollutes the console. In scalar context the function returns 0
-for success and the output of the command on error. In array context the
-function always return a list containing the return value of the command and
-the output of the command. (XXX: this function is also used in installer,
-think about refactoring it into a common module used by all Artemis projects)
-
-@param string - command
-
-@return success - 0
-@return error   - error string
-@returnlist success - (0, output)
-@returnlist error   - (return value of command, output)
-
-=cut
-
-sub log_and_exec
-{
-        my ($self, @cmd) = @_;
-        my $cmd = join " ",@cmd;
-        $self->log->debug( $cmd );
-        my $output=`$cmd 2>&1`;
-        my $retval=$?;
-        if (not defined($output)) {
-                $output = "Executing $cmd failed";
-                $retval = 1;
+        # hardcoding these values reduces dependancy on Artemis::Config and is
+        # bearable since it never really changes
+        my $logconf = 'log4perl.cfg';
+        if ($ENV{HARNESS_ACTIVE}) {
+           $logconf = 'log4perl_test.cfg';
         }
-        chomp $output if $output;
-        if ($retval) {
-                return ($retval >> 8, $output) if wantarray;
-                return $output;
-        }
-        return (0, $output) if wantarray;
-        return 0;
+	Log::Log4perl::init($logconf);
 }
-;
-
-
-
 
 =head2 mcp_send
 
@@ -95,6 +59,7 @@ sub mcp_send
         my $port   = $self->cfg->{port} || 7357;
 
         my $yaml = Dump($message);
+        
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
 					     PeerPort => $port,
 					     Proto    => 'tcp')){
@@ -155,6 +120,27 @@ sub mcp_error
         $self->log->error($retval) if $retval;
         exit 1;
 };
+
+
+=head2 set_comfile
+
+Set the file that holds the current state of this PRC for MCP to access in
+case of a restart. 
+
+@return 0
+
+=cut
+
+sub set_comfile
+{
+        if ($self->{cfg}->{guest_number}) {
+                $msg->{prc_number} = $self->{cfg}->{guest_number};
+        } else {
+                # guest numbers start with 1, 0 is host or no virtualisation
+                $msg->{prc_number} = 0;
+        }
+        
+}
 
 1;
 
