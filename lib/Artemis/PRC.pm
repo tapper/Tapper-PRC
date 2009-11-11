@@ -121,27 +121,6 @@ sub mcp_error
         exit 1;
 };
 
-
-=head2 set_comfile
-
-Set the file that holds the current state of this PRC for MCP to access in
-case of a restart. 
-
-@return 0
-
-=cut
-
-sub set_comfile
-{
-        if ($self->{cfg}->{guest_number}) {
-                $msg->{prc_number} = $self->{cfg}->{guest_number};
-        } else {
-                # guest numbers start with 1, 0 is host or no virtualisation
-                $msg->{prc_number} = 0;
-        }
-        
-}
-
 1;
 
 =head1 AUTHOR
