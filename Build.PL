@@ -31,6 +31,7 @@ my $builder = $build_class->new
                   'perl'               => '5.010',
                   'Artemis::Base'      => '0.010007',
                   'Method::Signatures' => 0,
+                  'Time::HiRes'        => 0,
                   'Moose'              => 0,
                   'Log::Log4perl'      => 0,
                   'List::Util'         => 0,
