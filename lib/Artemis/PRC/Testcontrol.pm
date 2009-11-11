@@ -9,6 +9,7 @@ use IPC::Open3;
 use File::Path;
 use Method::Signatures;
 use Moose;
+use Time::HiRes qw(usleep);
 
 use Artemis::PRC::Proxy;
 use Artemis::PRC::Config;
@@ -291,54 +292,20 @@ Synchronise with other hosts belonging to the same interdependent testrun.
 
 sub wait_for_sync
 {
-        my ($self, $peers) = @_;
-        my $hostname = Sys::Hostname::hostname();
-        my $port = $self->cfg->{sync_port};
-        my $sync_srv = IO::Socket::INET->new( LocalPort => $port, Listen => 5, );
-        my $select = IO::Select->new($sync_srv);
-        my %peerhosts;   # easier to delete than from array
-
-        foreach my $host (@$peers) {
-                $peerhosts{$host} = 1;
-        }
-
-        foreach my $host (keys %peerhosts) {
-                my $remote = IO::Socket::INET->new(PeerPort => $port, PeerAddr => $host,);
-                if ($remote) {
-                        $remote->print($hostname);
-                        $remote->close();
-                        delete($peerhosts{$host});
+        my ($self, $syncfile) = @_;
+        my $retval;
+        if ($retval = atomic_decrement($syncfile)) {
+                while (-e $syncfile) {
+                        usleep(100);
                 }
-                if ($select->can_read(0)) {
-                        my $msg_srv = $sync_srv->accept();
-                        my $remotehost;
-                        $msg_srv->read($remotehost, 2048); # no hostnames are that long, anything longer is wrong and can be ignored
-                        chomp $remotehost;
-                        $msg_srv->close();
-                        if ($peerhosts{$remotehost}) {
-                                delete($peerhosts{$remotehost});
-                        } else {
-                                $self->log->warn(qq(Received sync request from host "$remotehost" which is not in our peerhost list. Request was sent from ),$msg_srv->peerhost);
-                        }
-                }
-        }
-
-        while (%peerhosts) {
-                if ($select->can_read()) {   # TODO: timeout handling
-                        my $msg_srv = $sync_srv->accept();
-                        my $remotehost;
-                        $msg_srv->read($remotehost, 2048); # no hostnames are that long, anything longer is wrong and can be ignored
-                        chomp $remotehost;
-                        $msg_srv->close();
-                        if ($peerhosts{$remotehost}) {
-                                delete($peerhosts{$remotehost});
-                        } else {
-                                $self->log->warn(qq(Received sync request from host "$remotehost" which is not in our peerhost list. Request was sent from ),$msg_srv->peerhost);
-                        }
-                }
+                return 0;
+        } else {
+                my $count = unlink $syncfile;
+                return "Can not unlink $syncfile: $!" if not $count;
         }
         return 0;
 }
+
 
 =head2 run
 
@@ -359,9 +326,6 @@ sub run
         my $config = $producer->get_local_data("test-prc0");
         $self->log->logdie($config) if not ref $config eq 'HASH';
 
-        $self->{cfg} = $config;
-        $self->set_comfile($config);
-
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
         if ($config->{prc_nfs_server}) {
@@ -370,7 +334,7 @@ sub run
         }
         $self->log->logdie($retval) if $retval = $self->create_log();
 
-        if ($self->cfg->{sync_hosts}) {
+        if ($self->cfg->{syncfile}) {
                 $retval = $self->wait_for_sync($self->cfg->{sync_hosts});
                 $self->log->logdie($retval) if $retval;
         }
