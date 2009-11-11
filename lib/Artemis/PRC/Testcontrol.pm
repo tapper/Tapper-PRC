@@ -222,7 +222,6 @@ sub control_testprogram
         $ENV{ARTEMIS_REPORT_SERVER}   = $self->cfg->{report_server};
         $ENV{ARTEMIS_REPORT_API_PORT} = $self->cfg->{report_api_port};
         $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
-        $ENV{ARTEMIS_TS_RUNTIME}      = int ($self->cfg->{runtime} || 0);
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
         $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if defined $self->cfg->{reboot_counter};
         $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if defined $self->cfg->{max_reboot};
@@ -257,12 +256,13 @@ sub control_testprogram
 
         for (my $i=0; $i<=$#testprogram_list; $i++) {
                 my $testprogram =  $testprogram_list[$i];
+                $ENV{ARTEMIS_TS_RUNTIME}      = int ($testprogram->{runtime} || 0);
 
                 # unify differences in program vs. program_list vs. virt
                 $testprogram->{program} ||= $testprogram->{test_program};
                 $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
 
-                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and $testprogram->{parameters} eq "ARRAY";
+                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref $testprogram->{parameters} eq "ARRAY";
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
@@ -305,7 +305,6 @@ sub wait_for_sync
         }
         return 0;
 }
-
 
 =head2 run
 
