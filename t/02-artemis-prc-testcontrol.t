@@ -12,7 +12,7 @@ use Artemis::Model 'model';
 use Artemis::Schema::TestTools;
 
 
-use Test::More tests => 12;
+use Test::More;
 
 my $config_bkup = 't/files/artemis.backup';
 
@@ -162,3 +162,4 @@ if ($pid==0) {
 
 
 
+done_testing();
