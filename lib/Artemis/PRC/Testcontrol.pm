@@ -293,8 +293,10 @@ Synchronise with other hosts belonging to the same interdependent testrun.
 sub wait_for_sync
 {
         my ($self, $syncfile) = @_;
-        my $retval;
-        if ($retval = atomic_decrement($syncfile)) {
+        my ($error, $retval) = $self->atomic_decrement($syncfile);
+        return $retval if $error;
+
+        if ($retval > 0) {
                 while (-e $syncfile) {
                         usleep(100);
                 }
