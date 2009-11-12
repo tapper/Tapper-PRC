@@ -160,6 +160,62 @@ if ($pid==0) {
         is_deeply(Load($content[3]), $msg[3], 'Finished test');
 }
 
+########################################################
+#
+# Test state messages for multiple test scripts
+#
+########################################################
+
+$ENV{ARTEMIS_CONFIG} = "t/files/arguments.conf";
+
+@content=();
+
+$pid=fork();
+if ($pid==0) {
+        sleep(2); #bad and ugly to prevent race condition
+
+        my $testcontrol = new Artemis::PRC::Testcontrol;
+        $testcontrol->run();
+        exit 0;
+
+} else {
+        eval{
+                local $SIG{ALRM}=sub{die("timeout of 5 seconds reached while waiting for multiple test scripts messages.");};
+                alarm(5);
+                my $msg_sock = $server->accept();
+                while (my $line=<$msg_sock>) {
+                        $content[0].=$line;
+                }
+
+                $msg_sock = $server->accept();
+                while (my $line=<$msg_sock>) {
+                        $content[1].=$line;
+                }
+
+                $msg_sock = $server->accept();
+                while (my $line=<$msg_sock>) {
+                        $content[2].=$line;
+                }
+
+
+                alarm(0);
+        };
+        is($@, '', 'Get state messages in time');
+        waitpid($pid,0);
+
+        my @msg = ({prc_number => 0, state => "start-testing"},
+                   {prc_number => 0, state => "end-testprogram", testprogram => 0},
+                   {prc_number => 0, state => "end-testing"});
+
+        # error msg depends on language setting, thus we don't check it, in case it exists
+        if ($content[2]) {
+                is_deeply(Load($content[0]), $msg[0], 'Receiving start message');
+                is_deeply(Load($content[1]), $msg[1], 'First test script message');
+                is_deeply(Load($content[2]), $msg[2], 'Finished test');
+        } else {
+                fail('Messages from remote');
+        }
+}
 
 
 done_testing();
