@@ -31,15 +31,6 @@ has cfg => (is      => 'rw',
             default => sub { {} },
            );
 
-BEGIN {
-        # hardcoding these values reduces dependancy on Artemis::Config and is
-        # bearable since it never really changes
-        my $logconf = 'log4perl.cfg';
-        if ($ENV{HARNESS_ACTIVE}) {
-           $logconf = 'log4perl_test.cfg';
-        }
-	Log::Log4perl::init($logconf);
-}
 
 =head2 mcp_send
 
