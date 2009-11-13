@@ -5,5 +5,8 @@ echo -n 'Arg2: |'
 echo -n $2
 echo '|'
 echo -n 'All Args: |'
-echo -n $*
+echo -n $@
+echo '|'
+echo -n 'All quoted Args: |'
+echo -n "$@"
 echo '|'
