@@ -18,7 +18,7 @@ log4perl.appender.Screen = Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.layout = PatternLayout
 # date package category - message in  last 2 components of filename (linenumber) newline
 log4perl.appender.Screen.layout.ConversionPattern = %d %p %c - %m in %F{2} (%L)%n';
-Log::Log4perl::init($logconf);
+Log::Log4perl::init(\$logconf);
 
 
 my $prc = new Artemis::PRC::Testcontrol;
