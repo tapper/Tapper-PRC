@@ -13,7 +13,7 @@ if (@ARGV and $ARGV[0] eq "stop") {
 
 # hardcoding these values reduces dependancy on Artemis::Config and is
 # bearable since it never really changes
-my $logconf = 'log4perl.logger.root = INFO, Screen
+my $logconf = 'log4perl.rootlogger = DEBUG, Screen
 log4perl.appender.Screen = Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.layout = PatternLayout
 # date package category - message in  last 2 components of filename (linenumber) newline
