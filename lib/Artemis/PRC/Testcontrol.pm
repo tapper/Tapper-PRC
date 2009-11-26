@@ -295,6 +295,7 @@ sub wait_for_sync
         my ($self, $syncfile) = @_;
         my ($error, $retval) = $self->atomic_decrement($syncfile);
         return $retval if $error;
+        $self->log->debug("Start syncing, wait for ",$retval-1," other PRCs");
 
         if ($retval > 0) {
                 while (-e $syncfile) {
@@ -336,9 +337,10 @@ sub run
         }
         $self->log->logdie($retval) if $retval = $self->create_log();
 
-        if ($self->cfg->{syncfile}) {
-                $retval = $self->wait_for_sync($self->cfg->{sync_hosts});
-                $self->log->logdie($retval) if $retval;
+        if ($config->{scenario_id}) {
+                my $syncfile = $config->{paths}{sync_path}."/".$config->{scenario_id}."/syncfile";
+                $retval = $self->wait_for_sync($syncfile);
+                $self->log->logdie("Can not sync - $retval") if $retval;
         }
 
         if ($self->{cfg}->{guest_count}) {
