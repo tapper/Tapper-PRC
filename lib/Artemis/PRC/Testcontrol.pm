@@ -295,7 +295,7 @@ sub wait_for_sync
         my ($self, $syncfile) = @_;
         my ($error, $retval) = $self->atomic_decrement($syncfile);
         return $retval if $error;
-        $self->log->debug("Start syncing, wait for ",$retval-1," other PRCs");
+        $self->log->debug("Start syncing, wait for $retval other PRCs");
 
         if ($retval > 0) {
                 while (-e $syncfile) {
