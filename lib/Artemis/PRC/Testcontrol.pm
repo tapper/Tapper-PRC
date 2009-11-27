@@ -3,13 +3,10 @@ package Artemis::PRC::Testcontrol;
 use strict;
 use warnings;
 
-use IO::Socket::INET;
-use IO::Select;
 use IPC::Open3;
 use File::Path;
 use Method::Signatures;
 use Moose;
-use Time::HiRes qw(usleep);
 
 use Artemis::PRC::Proxy;
 use Artemis::PRC::Config;
@@ -222,9 +219,10 @@ sub control_testprogram
         $ENV{ARTEMIS_REPORT_SERVER}   = $self->cfg->{report_server};
         $ENV{ARTEMIS_REPORT_API_PORT} = $self->cfg->{report_api_port};
         $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
+        $ENV{ARTEMIS_TS_RUNTIME}      = $self->cfg->{runtime};
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
-        $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if defined $self->cfg->{reboot_counter};
-        $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if defined $self->cfg->{max_reboot};
+        $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if $self->cfg->{reboot_counter};
+        $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
         $ENV{ARTEMIS_GUEST_NUMBER}    = $self->{cfg}->{guest_number} || 0;
 
         my $retval;
@@ -256,13 +254,12 @@ sub control_testprogram
 
         for (my $i=0; $i<=$#testprogram_list; $i++) {
                 my $testprogram =  $testprogram_list[$i];
-                $ENV{ARTEMIS_TS_RUNTIME}      = int ($testprogram->{runtime} || 0);
 
                 # unify differences in program vs. program_list vs. virt
                 $testprogram->{program} ||= $testprogram->{test_program};
                 $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
 
-                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref $testprogram->{parameters} eq "ARRAY";
+                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and $testprogram->{parameters} eq "ARRAY";
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
@@ -278,33 +275,6 @@ sub control_testprogram
         return(0);
 }
 
-=head2 wait_for_sync
-
-Synchronise with other hosts belonging to the same interdependent testrun.
-
-@param array ref - list of hostnames of peer machines
-
-@return success - 0
-@return error   - error string
-
-=cut
-
-
-sub wait_for_sync
-{
-        my ($self, $syncfile) = @_;
-        my $retval;
-        if ($retval = atomic_decrement($syncfile)) {
-                while (-e $syncfile) {
-                        usleep(100);
-                }
-                return 0;
-        } else {
-                my $count = unlink $syncfile;
-                return "Can not unlink $syncfile: $!" if not $count;
-        }
-        return 0;
-}
 
 =head2 run
 
@@ -323,9 +293,7 @@ sub run
         my $retval;
         my $producer = Artemis::PRC::Config->new();
         my $config = $producer->get_local_data("test-prc0");
-        $self->log->logdie($config) if not ref $config eq 'HASH';
-        $self->cfg( $config );
-
+        $self->{cfg} = $config;
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
         if ($config->{prc_nfs_server}) {
@@ -334,10 +302,6 @@ sub run
         }
         $self->log->logdie($retval) if $retval = $self->create_log();
 
-        if ($self->cfg->{syncfile}) {
-                $retval = $self->wait_for_sync($self->cfg->{sync_hosts});
-                $self->log->logdie($retval) if $retval;
-        }
 
         if ($self->{cfg}->{guest_count}) {
 
