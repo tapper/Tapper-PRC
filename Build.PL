@@ -25,13 +25,11 @@ my $builder = $build_class->new
                         'Test::MockModule'            => 0,
                         'Test::More'                  => 0,
                         'Artemis::Test'               => '2.010005',
-                        'Artemis::Config'             => '2.010053',
                        },
      requires => {
                   'perl'               => '5.010',
                   'Artemis::Base'      => '0.010008',
                   'Method::Signatures' => 0,
-                  'Time::HiRes'        => 0,
                   'Moose'              => 0,
                   'Log::Log4perl'      => 0,
                   'List::Util'         => 0,

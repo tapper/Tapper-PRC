@@ -5,13 +5,11 @@ use warnings;
 
 use Sys::Hostname;
 use Artemis::PRC::Testcontrol;
-use Log::Log4perl;
 
 if (@ARGV and $ARGV[0] eq "stop") {
         exit 0;
 }
 
-# hardcoding these values reduces dependancy on Artemis::Config and is
 # bearable since it never really changes
 my $logconf = 'log4perl.rootlogger = DEBUG, Screen
 log4perl.appender.Screen = Log::Log4perl::Appender::Screen
