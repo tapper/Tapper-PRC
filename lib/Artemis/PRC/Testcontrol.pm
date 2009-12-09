@@ -224,7 +224,10 @@ sub control_testprogram
         $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
         $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if $self->cfg->{reboot_counter};
         $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
-        $ENV{ARTEMIS_GUEST_NUMBER}    = $self->{cfg}->{guest_number} || 0;
+        $ENV{ARTEMIS_GUEST_NUMBER}    = $self->cfg->{guest_number} || 0;
+        $ENV{ARTEMIS_SYNC_FILE}       = $self->cfg->{syncfile} if $self->cfg->{syncfile};
+
+
 
         my $retval;
         my $test_run         = $self->cfg->{test_run};
@@ -394,7 +397,7 @@ sub run
         my $retval;
         my $producer = Artemis::PRC::Config->new();
         my $config = $producer->get_local_data("test-prc0");
-        $self->{cfg} = $config;
+        $self->cfg = $config;
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
         if ($config->{prc_nfs_server}) {
@@ -405,6 +408,8 @@ sub run
 
         if ($config->{scenario_id}) {
                 my $syncfile = $config->{paths}{sync_path}."/".$config->{scenario_id}."/syncfile";
+                $self->cfg->{syncfile} = $syncfile;
+                
                 $retval = $self->wait_for_sync($syncfile);
                 $self->log->logdie("Can not sync - $retval") if $retval;
         }
