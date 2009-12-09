@@ -8,11 +8,11 @@ use YAML::Syck;
 use Moose;
 use Log::Log4perl;
 
-extends Artemis::Base;
+extends 'Artemis::Base';
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000061';
+our $VERSION = '2.000064';
 
 =head1 NAME
 
@@ -30,10 +30,6 @@ has cfg => (is      => 'rw',
             isa     => 'HashRef',
             default => sub { {} },
            );
-
-BEGIN {
-	Log::Log4perl::init(Artemis::Config->subconfig->{files}{log4perl_cfg}); # ss5 2009-09-23
-}
 
 =head2 mcp_send
 
