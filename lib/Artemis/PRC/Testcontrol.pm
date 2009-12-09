@@ -7,6 +7,7 @@ use IPC::Open3;
 use File::Path;
 use Method::Signatures;
 use Moose;
+use YAML 'LoadFile';
 
 use Artemis::PRC::Proxy;
 use Artemis::PRC::Config;
@@ -248,7 +249,8 @@ sub control_testprogram
                 my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
-                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => \@argv, timeout => $timeout});
+                my $runtime  = $self->cfg->{runtime};
+                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => \@argv, timeout => $timeout}, runtime => $runtime);
         }
 
 
@@ -275,6 +277,37 @@ sub control_testprogram
         return(0);
 }
 
+
+=head2 get_peers_from_file
+
+Read syncfile and extract list of peer hosts (not including this host).
+
+@param string - file name
+
+@return success - hash ref
+
+@throws plain error message
+
+=cut
+
+sub get_peers_from_file
+{
+        my ($self, $file) = @_;
+        my $peers;
+        
+        $peers = LoadFile($file);
+        return "Syncfile does not contain a list of host names" if not ref($peers) eq 'ARRAY';
+
+        my $hostname = $self->cfg->{hostname};
+        my %peerhosts;
+        foreach my $host (@$peers) {
+                $peerhosts{$host} = 1;
+        }
+        delete $peerhosts{$hostname};
+
+        return \%peerhosts;
+}
+
 =head2 wait_for_sync
 
 Synchronise with other hosts belonging to the same interdependent testrun.
@@ -289,16 +322,22 @@ Synchronise with other hosts belonging to the same interdependent testrun.
 
 sub wait_for_sync
 {
-        my ($self, $peers) = @_;
-        my $hostname = Sys::Hostname::hostname();
+        my ($self, $syncfile) = @_;
+        
+        my %peerhosts;   # easier to delete than from array
+        
+        eval {
+                %peerhosts = %{$self->get_peers_from_file($syncfile)};
+        };
+        return $@ if $@;
+          
+
+        my $hostname = $self->cfg->{hostname};
         my $port = $self->cfg->{sync_port};
         my $sync_srv = IO::Socket::INET->new( LocalPort => $port, Listen => 5, );
         my $select = IO::Select->new($sync_srv);
-        my %peerhosts;   # easier to delete than from array
 
-        foreach my $host (@$peers) {
-                $peerhosts{$host} = 1;
-        }
+        
 
         foreach my $host (keys %peerhosts) {
                 my $remote = IO::Socket::INET->new(PeerPort => $port, PeerAddr => $host,);
