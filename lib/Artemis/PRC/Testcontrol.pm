@@ -253,7 +253,7 @@ sub control_testprogram
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
-                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => \@argv, timeout => $timeout}, runtime => $runtime);
+                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => \@argv, timeout => $timeout, runtime => $runtime});
         }
 
 
