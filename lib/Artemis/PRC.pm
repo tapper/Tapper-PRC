@@ -12,7 +12,7 @@ extends 'Artemis::Base';
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000073';
+our $VERSION = '2.000074';
 
 =head1 NAME
 
@@ -46,7 +46,7 @@ sub mcp_send
 {
         my ($self, $message) = @_;
         my $server = $self->cfg->{mcp_server} or return "MCP host unknown";
-        my $port   = $self->cfg->{port} || 7357;
+        my $port   = $self->cfg->{mcp_port} || $self->cfg->{port} || 7357;
 
         my $yaml = Dump($message);
         
