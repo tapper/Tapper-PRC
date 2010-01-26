@@ -265,7 +265,7 @@ sub control_testprogram
                 $testprogram->{program} ||= $testprogram->{test_program};
                 $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
 
-                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and $testprogram->{parameters} eq "ARRAY";
+                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
