@@ -258,7 +258,7 @@ sub control_testprogram
 
         for (my $i=0; $i<=$#testprogram_list; $i++) {
                 my $testprogram =  $testprogram_list[$i];
-                
+
                 $ENV{ARTEMIS_TS_RUNTIME}      = $testprogram->{runtime} || 0;
 
                 # unify differences in program vs. program_list vs. virt
@@ -298,7 +298,7 @@ sub get_peers_from_file
 {
         my ($self, $file) = @_;
         my $peers;
-        
+
         $peers = LoadFile($file);
         return "Syncfile does not contain a list of host names" if not ref($peers) eq 'ARRAY';
 
@@ -327,21 +327,21 @@ Synchronise with other hosts belonging to the same interdependent testrun.
 sub wait_for_sync
 {
         my ($self, $syncfile) = @_;
-        
+
         my %peerhosts;   # easier to delete than from array
-        
+
         eval {
                 %peerhosts = %{$self->get_peers_from_file($syncfile)};
         };
         return $@ if $@;
-          
+
 
         my $hostname = $self->cfg->{hostname};
         my $port = $self->cfg->{sync_port};
         my $sync_srv = IO::Socket::INET->new( LocalPort => $port, Listen => 5, );
         my $select = IO::Select->new($sync_srv);
 
-        
+
 
         foreach my $host (keys %peerhosts) {
                 my $remote = IO::Socket::INET->new(PeerPort => $port, PeerAddr => $host,);
@@ -410,7 +410,7 @@ sub run
         if ($config->{scenario_id}) {
                 my $syncfile = $config->{paths}{sync_path}."/".$config->{scenario_id}."/syncfile";
                 $self->cfg->{syncfile} = $syncfile;
-                
+
                 $retval = $self->wait_for_sync($syncfile);
                 $self->log->logdie("Can not sync - $retval") if $retval;
         }
