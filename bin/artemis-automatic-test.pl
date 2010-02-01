@@ -19,6 +19,11 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %p %c - %m in %F{2} (%L)%
 Log::Log4perl::init(\$logconf);
 
 
+if (@ARGV and $ARGV[0] eq "autoinstall") {
+        my $client = new Artemis::Installer::Base;
+        $client->system_install("autoinstall");
+}
+
 my $prc = new Artemis::PRC::Testcontrol;
 $prc->run();
 
