@@ -5,6 +5,7 @@ use warnings;
 
 use Sys::Hostname;
 use Artemis::PRC::Testcontrol;
+use Artemis::Installer::Base;
 
 if (@ARGV and $ARGV[0] eq "stop") {
         exit 0;
