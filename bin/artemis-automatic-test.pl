@@ -20,7 +20,7 @@ Log::Log4perl::init(\$logconf);
 
 
 if (@ARGV and $ARGV[0] eq "autoinstall") {
-        my $client = new Artemis::Installer::Base;
+        my $client = Artemis::Installer::Base->new;
         $client->system_install("autoinstall");
 }
 
