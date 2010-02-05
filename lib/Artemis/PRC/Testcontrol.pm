@@ -122,8 +122,10 @@ sub guest_start
                                 return qq(Startscript "$startscript" is empty or does not exist at all)
                         } else {
                                 # just try to set it executable always
-                                system ("chmod", "ugo+x", $startscript) if not -x $startscript;
-                                return qq(Unable to set executable bit on "$startscript": $!);
+                                if (not -x $startscript) {
+                                        system ("chmod", "ugo+x", $startscript) == 0 or
+                                          return qq(Unable to set executable bit on "$startscript": $!);
+                                }
                         }
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
