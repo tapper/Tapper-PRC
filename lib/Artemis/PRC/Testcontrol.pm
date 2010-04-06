@@ -10,7 +10,7 @@ use Moose;
 use YAML 'LoadFile';
 
 use Artemis::PRC::Proxy;
-use Artemis::PRC::Config;
+use Artemis::Remote::Config;
 
 extends 'Artemis::PRC';
 
@@ -398,7 +398,7 @@ sub run
 {
         my ($self) = @_;
         my $retval;
-        my $producer = Artemis::PRC::Config->new();
+        my $producer = Artemis::Remote::Config->new();
         my $config = $producer->get_local_data("test-prc0");
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
