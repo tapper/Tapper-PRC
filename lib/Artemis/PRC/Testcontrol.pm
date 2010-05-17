@@ -405,7 +405,7 @@ sub run
 
         if ($config->{prc_nfs_server}) {
                 $retval = $self->nfs_mount();
-                $self->log->logdie($retval) if $retval;
+                $self->log->warn($retval) if $retval;
         }
         $self->log->logdie($retval) if $retval = $self->create_log();
 
