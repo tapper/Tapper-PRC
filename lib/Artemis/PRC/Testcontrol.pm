@@ -403,10 +403,14 @@ sub run
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
+        # ignore error
+        $self->log_and_exec('ntpdate -s gwo');
+
         if ($config->{prc_nfs_server}) {
                 $retval = $self->nfs_mount();
                 $self->log->warn($retval) if $retval;
         }
+
         $self->log->logdie($retval) if $retval = $self->create_log();
 
         if ($config->{scenario_id}) {
