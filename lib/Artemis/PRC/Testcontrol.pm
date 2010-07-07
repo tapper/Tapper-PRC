@@ -168,11 +168,13 @@ sub create_log
                 # every guest gets its own subdirectory
                 my $guestoutdir="$outdir/guest-$guest_number/";
 
-                mkpath($guestoutdir, {error => \$retval}) if not -d $guestoutdir;
-                foreach my $diag (@$retval) {
-                        my ($file, $message) = each %$diag;
-                        return "general error: $message\n" if $file eq '';
-                        return "Can't create $file: $message";
+                if (not -d $guestoutdir) {
+                        mkpath($guestoutdir, {error => \$retval});
+                        foreach my $diag (@$retval) {
+                                my ($file, $message) = each %$diag;
+                                return "general error: $message\n" if $file eq '';
+                                return "Can't create $file: $message";
+                        }
                 }
 
                 ($error, $retval) = $self->log_and_exec("ln -sf $guestoutdir/console /tmp/guest$guest_number.fifo");
