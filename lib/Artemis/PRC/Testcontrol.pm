@@ -9,7 +9,6 @@ use Method::Signatures;
 use Moose;
 use YAML 'LoadFile';
 
-use Artemis::PRC::Proxy;
 use Artemis::Remote::Config;
 
 extends 'Artemis::PRC';
@@ -158,21 +157,28 @@ not. Existing files of wrong type are deleted.
 sub create_log
 {
         my ($self) = @_;
-        for(my $i=0; $i <= $#{$self->cfg->{guests}}; $i++) {
+        my $testrun = $self->cfg->{test_run};
+        my $outdir  = $self->cfg->{paths}{output_dir}."/$testrun/test/";
+        my ($error, $retval);
+
+        for (my $i = 0; $i <= $#{$self->cfg->{guests}}; $i++) {
+                # guest count starts with 1, arrays start with 0
                 my $guest_number=$i+1;
-                my $fifo = "/tmp/guest$guest_number.fifo";
-                if (not -p "$fifo") {
-                        my ($error, $retval);
-                        rmtree($fifo,{verbose => 0, error => \$error});
-                ERROR:
-                        for my $diag (@$error) {
+
+                # every guest gets its own subdirectory
+                my $guestoutdir="$outdir/guest-$guest_number/";
+
+                if (not -d $guestoutdir) {
+                        mkpath($guestoutdir, {error => \$retval});
+                        foreach my $diag (@$retval) {
                                 my ($file, $message) = each %$diag;
-                                next ERROR if not $file; # remove inexisting file
-                                return "Can't remove $file:$message\n";
+                                return "general error: $message\n" if $file eq '';
+                                return "Can't create $file: $message";
                         }
-                        ($error, $retval) = $self->log_and_exec("mkfifo",$fifo);
-                        return "Can't create guest console file $fifo: $retval" if $error;
                 }
+
+                ($error, $retval) = $self->log_and_exec("ln -sf $guestoutdir/console /tmp/guest$guest_number.fifo");
+                return "Can't create guest console file $guestoutdir/console: $retval" if $error;
         }
         return 0;
 }
@@ -385,12 +391,7 @@ sub wait_for_sync
 
 =head2 run
 
-Main function of Program Run Control. When used in virtualisation environment,
-a proxy is created in a child process. The parent process waits until the
-proxy sends a "ready" message through the pipe provided as
-$self->cfg->{syncwrite} in the proxy. When this state is received or the
-function is called in a test without virtualisation, it continues with
-starting the guests (if any) and to call test control functions.
+Main function of Program Run Control.
 
 =cut
 
@@ -403,10 +404,14 @@ sub run
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
+        # ignore error
+        $self->log_and_exec('ntpdate -s gwo');
+
         if ($config->{prc_nfs_server}) {
                 $retval = $self->nfs_mount();
                 $self->log->warn($retval) if $retval;
         }
+
         $self->log->logdie($retval) if $retval = $self->create_log();
 
         if ($config->{scenario_id}) {
@@ -421,38 +426,8 @@ sub run
 
                 $config->{prc_count} = $config->{guest_count} + 1; # always have a PRC in host
 
-                my ($read, $write);
-                pipe($read, $write) or $self->log->error("Can't open pipe to talk to child: $!") && return;
-
-                my $pid = fork();
-                $self->log->error("fork failed: $!") and return -1 if (not defined $pid);
-
-                if ($pid == 0) {
-                        # send pipe to proxy
-                        $config->{syncwrite} = $write;
-                        close $read;
-
-                        $config->{server} = $config->{mcp_server};
-                        # proxy collects state messages from guests and sends reports with more
-                        # information to MCP
-                        my $proxy = Artemis::PRC::Proxy->new($config);
-                        $retval = $proxy->run;
-                        if ($retval) {
-                                #syswrite($write,$retval."\n");
-                                $self->log->error($retval);
-                                exit -1;
-                        }
-                        exit 0;
-
-                } else {
-                        close $write;
-                        # wait for proxy, ignore the message
-                        <$read>;
-                        # report testprogram state to Proxy
-                        $retval = $self->guest_start();
-                        $self->log->error($retval) if $retval;
-                }
-
+                $retval = $self->guest_start();
+                $self->log->error($retval) if $retval;
         }
 
         $retval = $self->mcp_inform({state => 'start-testing'}) if not $self->cfg->{reboot_counter};

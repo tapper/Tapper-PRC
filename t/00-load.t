@@ -3,11 +3,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 2;
 
 BEGIN {
         use_ok( 'Artemis::PRC' );
-        use_ok( 'Artemis::PRC::Proxy' );
         use_ok( 'Artemis::PRC::Testcontrol' );
 }
 

@@ -4,3 +4,6 @@ guests: []
 max_reboot: 2
 mcp_server: localhost
 port: 1337
+test_run: 1234
+paths:
+  output_dir: /tmp/
