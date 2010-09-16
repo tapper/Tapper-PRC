@@ -55,12 +55,11 @@ sub testprogram_execute
         # make relative paths absolute
         $program=$progpath.$program if $program !~ m(^/);
 
-        # if exec fails  the error message will go into the output file, thus its best to catch
-        # many error early to have them reported back
-        return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
-
-
-
+        # try to catch non executables early
+        return("tried to execute $program which does not exist") unless -e $program;
+        return("tried to execute $program which is not an execuable") unless -x $program;
+        return("tried to execute $program which is a directory") if -d $program;
+        return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
 
         $self->log->info("Try to execute test suite $program");
 
