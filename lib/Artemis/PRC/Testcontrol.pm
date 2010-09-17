@@ -1,13 +1,12 @@
 package Artemis::PRC::Testcontrol;
 
-use strict;
-use warnings;
-
 use IPC::Open3;
 use File::Path;
 use Method::Signatures;
 use Moose;
 use YAML 'LoadFile';
+
+use common::sense;
 
 use Artemis::Remote::Config;
 
