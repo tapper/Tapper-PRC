@@ -35,6 +35,7 @@ my $builder = $build_class->new
                   'List::Util'         => 0,
                   'IPC::Open3'         => 0,
                   'File::Path'         => 0,
+                  'common::sense'      => 0,
                  },
      add_to_cleanup      => [ 'Artemis-*' ],
     );
