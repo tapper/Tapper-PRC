@@ -70,8 +70,8 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
-                open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
-                open (STDERR, ">>$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
+                open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
                 exec ($program, @argv) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
@@ -237,7 +237,8 @@ sub control_testprogram
         my $retval;
         my $test_run         = $self->cfg->{test_run};
         my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
-        my @testprogram_list = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
+        my @testprogram_list;
+        @testprogram_list    = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
 
 
         # prepend outdir with guest number if we are in virtualisation guest
@@ -254,7 +255,8 @@ sub control_testprogram
         $ENV{ARTEMIS_OUTPUT_PATH}=$out_dir;
 
         if ($self->cfg->{test_program}) {
-                my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
+                my @argv;
+                @argv        = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
@@ -271,7 +273,8 @@ sub control_testprogram
                 $testprogram->{program} ||= $testprogram->{test_program};
                 $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
 
-                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
+                my @argv;
+                @argv      = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
