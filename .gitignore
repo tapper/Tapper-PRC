@@ -19,3 +19,6 @@ artemis_reportsdb_development.sqlite
 MANIFEST
 MYMETA.yml
 META.yml
+Makefile
+inc/
+
