@@ -6,6 +6,7 @@ use inc::Module::Install;
 name     'Artemis-PRC';
 all_from 'lib/Artemis/PRC.pm';
 author   'OSRC SysInt Team <osrc-sysint@elbe.amd.com>';
+license  'freebsd';
 
 build_requires 'Test::Fixture::DBIC::Schema' => 0;
 build_requires 'Test::Perl::Critic'          => 0;
@@ -22,6 +23,5 @@ requires 'List::Util'         => 0;
 requires 'IPC::Open3'         => 0;
 requires 'File::Path'         => 0;
 requires 'common::sense'      => 0;
-
 
 WriteAll;
