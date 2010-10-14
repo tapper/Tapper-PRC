@@ -12,7 +12,7 @@ extends 'Artemis::Base';
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000097';
+our $VERSION = '2.000101';
 
 =head1 NAME
 
