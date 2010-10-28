@@ -110,32 +110,41 @@ sub guest_start
 {
         my ($self) = @_;
         my $retval;
+ GUEST:
         for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
                 my $guest = $self->cfg->{guests}->[$i];
                 if ($guest->{exec}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
                         if (not -s $startscript) {
-                                return qq(Startscript "$startscript" is empty or does not exist at all)
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                 error => qq(Startscript "$startscript" is empty or does not exist at all)});
+                                next GUEST;
                         } else {
                                 # just try to set it executable always
                                 if (not -x $startscript) {
-                                        system ("chmod", "ugo+x", $startscript) == 0 or
-                                          return qq(Unable to set executable bit on "$startscript": $!);
+                                        unless (system ("chmod", "ugo+x", $startscript) == 0) {
+                                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                                 error => 
+                                                                 return qq(Unable to set executable bit on "$startscript": $!)
+                                                                });
+                                                next GUEST;
+                                        }  
                                 }
                         }
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
-                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
-                                return $retval;
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                 error => $retval});
+                                next GUEST;
                         }
                 } elsif ($guest->{svm}){
                         $self->log->info("Try load Xen guest described in ",$guest->{svm});
-                        print STDERR "Artemis::PRC::Testcontrol: xm create ",$guest->{svm},"\n";
                         if (not (system("xm","create",$guest->{svm}) == 0)) {
                                 $retval = "Can't start xen guest described in $guest->{svm}";
-                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
-                                return $retval;
+                                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                                 error => $retval});
+                                next GUEST;
                         }
                 }
         }
