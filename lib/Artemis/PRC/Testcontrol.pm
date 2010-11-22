@@ -1,13 +1,12 @@
 package Artemis::PRC::Testcontrol;
 
-use strict;
-use warnings;
-
 use IPC::Open3;
 use File::Path;
 use Method::Signatures;
 use Moose;
 use YAML 'LoadFile';
+
+use common::sense;
 
 use Artemis::Remote::Config;
 
@@ -55,12 +54,11 @@ sub testprogram_execute
         # make relative paths absolute
         $program=$progpath.$program if $program !~ m(^/);
 
-        # if exec fails  the error message will go into the output file, thus its best to catch
-        # many error early to have them reported back
-        return("tried to execute $program which is not an execuable or does not exist at all") if not -x $program;
-
-
-
+        # try to catch non executables early
+        return("tried to execute $program which does not exist") unless -e $program;
+        return("tried to execute $program which is not an execuable") unless -x $program;
+        return("tried to execute $program which is a directory") if -d $program;
+        return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
 
         $self->log->info("Try to execute test suite $program");
 
@@ -72,8 +70,8 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
-                open (STDOUT, ">>$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
-                open (STDERR, ">>$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
+                open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
                 exec ($program, @argv) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
@@ -112,32 +110,41 @@ sub guest_start
 {
         my ($self) = @_;
         my $retval;
+ GUEST:
         for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
                 my $guest = $self->cfg->{guests}->[$i];
                 if ($guest->{exec}){
                         my $startscript = $guest->{exec};
                         $self->log->info("Try to start virtualisation guest with $startscript");
                         if (not -s $startscript) {
-                                return qq(Startscript "$startscript" is empty or does not exist at all)
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                 error => qq(Startscript "$startscript" is empty or does not exist at all)});
+                                next GUEST;
                         } else {
                                 # just try to set it executable always
                                 if (not -x $startscript) {
-                                        system ("chmod", "ugo+x", $startscript) == 0 or
-                                          return qq(Unable to set executable bit on "$startscript": $!);
+                                        unless (system ("chmod", "ugo+x", $startscript) == 0) {
+                                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                                 error => 
+                                                                 return qq(Unable to set executable bit on "$startscript": $!)
+                                                                });
+                                                next GUEST;
+                                        }  
                                 }
                         }
                         if (not system($startscript) == 0 ) {
                                 $retval = qq(Can't start virtualisation guest using startscript "$startscript");
-                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
-                                return $retval;
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                 error => $retval});
+                                next GUEST;
                         }
                 } elsif ($guest->{svm}){
                         $self->log->info("Try load Xen guest described in ",$guest->{svm});
-                        print STDERR "Artemis::PRC::Testcontrol: xm create ",$guest->{svm},"\n";
                         if (not (system("xm","create",$guest->{svm}) == 0)) {
                                 $retval = "Can't start xen guest described in $guest->{svm}";
-                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest', error => $retval});
-                                return $retval;
+                                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                                 error => $retval});
+                                next GUEST;
                         }
                 }
         }
@@ -176,6 +183,12 @@ sub create_log
                                 return "Can't create $file: $message";
                         }
                 }
+
+                # create empty console file with right permissions
+                my $umask = umask(000);
+                open(my $fh, ">", '$guestoutdir/console');
+                close $fh;
+                umask($umask);
 
                 ($error, $retval) = $self->log_and_exec("ln -sf $guestoutdir/console /tmp/guest$guest_number.fifo");
                 return "Can't create guest console file $guestoutdir/console: $retval" if $error;
@@ -239,7 +252,8 @@ sub control_testprogram
         my $retval;
         my $test_run         = $self->cfg->{test_run};
         my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
-        my @testprogram_list = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
+        my @testprogram_list;
+        @testprogram_list    = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
 
 
         # prepend outdir with guest number if we are in virtualisation guest
@@ -256,7 +270,8 @@ sub control_testprogram
         $ENV{ARTEMIS_OUTPUT_PATH}=$out_dir;
 
         if ($self->cfg->{test_program}) {
-                my @argv     = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
+                my @argv;
+                @argv        = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
@@ -273,7 +288,8 @@ sub control_testprogram
                 $testprogram->{program} ||= $testprogram->{test_program};
                 $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
 
-                my @argv   = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
+                my @argv;
+                @argv      = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
                 my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
 
                 if ($retval) {
