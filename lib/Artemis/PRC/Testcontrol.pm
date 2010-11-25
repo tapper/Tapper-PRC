@@ -147,6 +147,7 @@ sub guest_start
                                 next GUEST;
                         }
                 }
+                $self->mcp_send({prc_number => ($i+1), state => 'start-guest'});
         }
         return 0;
 }
