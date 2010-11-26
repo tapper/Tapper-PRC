@@ -184,6 +184,8 @@ sub create_log
                         }
                 }
 
+                $self->log_and_exec("touch /tmp/guest$guest_number.fifo");
+                $self->log_and_exec("chmod 666 /tmp/guest$guest_number.fifo");
                 ($error, $retval) = $self->log_and_exec("ln -sf $guestoutdir/console /tmp/guest$guest_number.fifo");
                 return "Can't create guest console file $guestoutdir/console: $retval" if $error;
         }
