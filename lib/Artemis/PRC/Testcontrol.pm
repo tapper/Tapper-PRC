@@ -184,12 +184,8 @@ sub create_log
                         }
                 }
 
-                # create empty console file with right permissions
-                my $umask = umask(000);
-                open(my $fh, ">", '$guestoutdir/console');
-                close $fh;
-                umask($umask);
-
+                $self->log_and_exec("touch $guestoutdir/console");
+                $self->log_and_exec("chmod 666 $guestoutdir/console");
                 ($error, $retval) = $self->log_and_exec("ln -sf $guestoutdir/console /tmp/guest$guest_number.fifo");
                 return "Can't create guest console file $guestoutdir/console: $retval" if $error;
         }
