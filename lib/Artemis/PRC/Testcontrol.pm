@@ -2,7 +2,6 @@ package Artemis::PRC::Testcontrol;
 
 use IPC::Open3;
 use File::Path;
-use Method::Signatures;
 use Moose;
 use YAML 'LoadFile';
 
