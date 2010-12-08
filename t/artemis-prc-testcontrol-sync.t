@@ -6,10 +6,8 @@ use warnings;
 use Test::MockModule;
 use YAML::Syck;
 
+use Log::Log4perl;
 
-use Artemis::Model 'model';
-use Artemis::Config;
-use Artemis::Schema::TestTools;
 
 use Test::More;
 use Test::Deep;
@@ -57,7 +55,7 @@ my $retval;
 SKIP:
 {
         skip 'Can not test syncing without peer',1 unless $ENV{ARTEMIS_SYNC_TESTING};
-        $testcontrol->cfg(Artemis::Config::subconfig);
+        $testcontrol->cfg();
         $retval = $testcontrol->wait_for_sync(['wotan']);
         is($retval, 0, 'Synced');
 }

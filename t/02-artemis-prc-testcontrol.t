@@ -7,10 +7,7 @@ use Test::MockModule;
 use File::Temp qw/ :seekable /;
 use YAML::Syck;
 
-
-use Artemis::Model 'model';
-use Artemis::Schema::TestTools;
-
+use Log::Log4perl;
 
 use Test::More tests => 12;
 

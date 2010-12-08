@@ -6,10 +6,7 @@ use warnings;
 use Test::MockModule;
 use YAML::Syck;
 
-use Artemis::Model 'model';
-use Artemis::Schema::TestTools;
-
-
+use Log::Log4perl;
 
 use Test::More tests => 5;
 
