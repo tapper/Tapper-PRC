@@ -77,7 +77,7 @@ sub testprogram_execute
         } else {
                 # hello parent
                 close $write;
-                our $killed;
+                my $killed;
                 # (XXX) better create a process group an kill this
                 local $SIG{ALRM}=sub{$killed=1;kill (15,$pid); kill (9,$pid);};
                 alarm ($timeout);
