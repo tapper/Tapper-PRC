@@ -86,7 +86,6 @@ if ($pid==0) {
         is($@, '', 'Getting data from file upload');
 
         is($content[2]->{state}, 'end-testprogram', 'Continue testing after timeout in first testprogram');
-        print STDERR Dumper \@content;
 
         waitpid($pid,0);
 }
