@@ -31,7 +31,7 @@ my $prc = new Artemis::PRC;
 my ($error, $output) = $prc->log_and_exec('echo test');
 is ($output,'test','log_and_exec, array mode');
 
-$prc->{cfg} = {mcp_server => 'localhost', port => 1337};
+$prc->{cfg} = {test_run => 1234, mcp_server => 'localhost', port => 1337};
 my $pid=fork();
 if ($pid==0) {
         sleep(2); #bad and ugly to prevent race condition
@@ -55,7 +55,7 @@ if ($pid==0) {
         is($@, '', 'Getting data from file upload');
 
         my $msg = Load($content);
-        is_deeply($msg, {prc_number => 0, state => "test"}, 'sending message to server, no virtualisation');
+        is_deeply($msg, {testrun_id => 1234, prc_number => 0, state => "test"}, 'sending message to server, no virtualisation');
 
         waitpid($pid,0);
 }
