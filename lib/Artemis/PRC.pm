@@ -46,8 +46,8 @@ sub mcp_send
 {
         my ($self, $message) = @_;
         my $server = $self->cfg->{mcp_server} or return "MCP host unknown";
-        my $port   = $self->cfg->{mcp_port} || $self->cfg->{port} || 7357;
-
+        my $port   = $self->cfg->{mcp_port} || $self->cfg->{port} || 1337;
+        $message->{testrun_id} ||= $self->cfg->{test_run};
         my $yaml = Dump($message);
         
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
@@ -80,7 +80,7 @@ sub mcp_inform
         return "$msg is not a hash" if not ref($msg) eq 'HASH';
 
         # set PRC number
-        if ($self->{cfg}->{guest_number}) {
+        if ($self->cfg->{guest_number}) {
                 $msg->{prc_number} = $self->{cfg}->{guest_number};
         } else {
                 # guest numbers start with 1, 0 is host or no virtualisation
