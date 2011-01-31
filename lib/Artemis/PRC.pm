@@ -8,7 +8,7 @@ use YAML::Syck;
 use Moose;
 use Log::Log4perl;
 
-extends 'Artemis::Base';
+extends 'Tapper::Base';
 
 with 'MooseX::Log::Log4perl';
 

@@ -15,7 +15,7 @@ build_requires 'Test::More'                  => 0;
 build_requires 'Artemis::Test'               => '2.010005';
 
 requires 'perl'               => '5.010';
-requires 'Artemis::Base'      => '0.010008';
+requires 'Tapper::Base'      => '0.010008';
 requires 'Artemis::Remote'    => '1.000001';
 requires 'Moose'              => 0;
 requires 'Log::Log4perl'      => 0;
