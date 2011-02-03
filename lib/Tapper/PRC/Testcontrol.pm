@@ -1,4 +1,4 @@
-package Artemis::PRC::Testcontrol;
+package Tapper::PRC::Testcontrol;
 
 use IPC::Open3;
 use File::Path;
@@ -7,20 +7,20 @@ use YAML 'LoadFile';
 
 use common::sense;
 
-use Artemis::Remote::Config;
+use Tapper::Remote::Config;
 
-extends 'Artemis::PRC';
+extends 'Tapper::PRC';
 
 our $MAXREAD = 1024;  # read that much in one read
 
 
 =head1 NAME
 
-Artemis::PRC::Testcontrol - Control running test programs
+Tapper::PRC::Testcontrol - Control running test programs
 
 =head1 SYNOPSIS
 
- use Artemis::PRC::Testcontrol;
+ use Tapper::PRC::Testcontrol;
 
 =head1 FUNCTIONS
 
@@ -232,16 +232,16 @@ the environment variables some testers asked for.
 sub control_testprogram
 {
         my ($self) = @_;
-        $ENV{ARTEMIS_TESTRUN}         = $self->cfg->{test_run};
-        $ENV{ARTEMIS_SERVER}          = $self->cfg->{mcp_server};
-        $ENV{ARTEMIS_REPORT_SERVER}   = $self->cfg->{report_server};
-        $ENV{ARTEMIS_REPORT_API_PORT} = $self->cfg->{report_api_port};
-        $ENV{ARTEMIS_REPORT_PORT}     = $self->cfg->{report_port};
-        $ENV{ARTEMIS_HOSTNAME}        = $self->cfg->{hostname};
-        $ENV{ARTEMIS_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if $self->cfg->{reboot_counter};
-        $ENV{ARTEMIS_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
-        $ENV{ARTEMIS_GUEST_NUMBER}    = $self->cfg->{guest_number} || 0;
-        $ENV{ARTEMIS_SYNC_FILE}       = $self->cfg->{syncfile} if $self->cfg->{syncfile};
+        $ENV{TAPPER_TESTRUN}         = $self->cfg->{test_run};
+        $ENV{TAPPER_SERVER}          = $self->cfg->{mcp_server};
+        $ENV{TAPPER_REPORT_SERVER}   = $self->cfg->{report_server};
+        $ENV{TAPPER_REPORT_API_PORT} = $self->cfg->{report_api_port};
+        $ENV{TAPPER_REPORT_PORT}     = $self->cfg->{report_port};
+        $ENV{TAPPER_HOSTNAME}        = $self->cfg->{hostname};
+        $ENV{TAPPER_REBOOT_COUNTER}  = $self->cfg->{reboot_counter} if $self->cfg->{reboot_counter};
+        $ENV{TAPPER_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
+        $ENV{TAPPER_GUEST_NUMBER}    = $self->cfg->{guest_number} || 0;
+        $ENV{TAPPER_SYNC_FILE}       = $self->cfg->{syncfile} if $self->cfg->{syncfile};
 
 
 
@@ -263,7 +263,7 @@ sub control_testprogram
                 return "Can't create $file: $message";
         }
 
-        $ENV{ARTEMIS_OUTPUT_PATH}=$out_dir;
+        $ENV{TAPPER_OUTPUT_PATH}=$out_dir;
 
         if ($self->cfg->{test_program}) {
                 my @argv;
@@ -278,7 +278,7 @@ sub control_testprogram
         for (my $i=0; $i<=$#testprogram_list; $i++) {
                 my $testprogram =  $testprogram_list[$i];
 
-                $ENV{ARTEMIS_TS_RUNTIME}      = $testprogram->{runtime} || 0;
+                $ENV{TAPPER_TS_RUNTIME}      = $testprogram->{runtime} || 0;
 
                 # unify differences in program vs. program_list vs. virt
                 $testprogram->{program} ||= $testprogram->{test_program};
@@ -411,7 +411,7 @@ sub run
 {
         my ($self) = @_;
         my $retval;
-        my $producer = Artemis::Remote::Config->new();
+        my $producer = Tapper::Remote::Config->new();
         my $config = $producer->get_local_data("test-prc0");
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
@@ -477,7 +477,7 @@ None.
 
 You can find documentation for this module with the perldoc command.
 
- perldoc Artemis
+ perldoc Tapper
 
 
 =head1 ACKNOWLEDGEMENTS

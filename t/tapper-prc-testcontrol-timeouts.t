@@ -20,10 +20,10 @@ log4perl.appender.root.layout = SimpleLayout";
 Log::Log4perl->init(\$string);
 
 
-BEGIN { use_ok('Artemis::PRC::Testcontrol'); }
+BEGIN { use_ok('Tapper::PRC::Testcontrol'); }
 
 
-my $prc = Artemis::PRC::Testcontrol->new();
+my $prc = Tapper::PRC::Testcontrol->new();
 
 my $output_dir = File::Temp::tempdir( CLEANUP => 1 );
 my $config = {
@@ -51,7 +51,7 @@ my $config = {
                                    }
                                   ],
              };
-my $mock_config = Test::MockModule->new('Artemis::Remote::Config');
+my $mock_config = Test::MockModule->new('Tapper::Remote::Config');
 $mock_config->mock('get_local_data',sub{return $config});
 
 my $pid=fork();

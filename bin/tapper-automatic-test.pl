@@ -4,8 +4,8 @@ use strict;
 use warnings;
 
 use Sys::Hostname;
-use Artemis::PRC::Testcontrol;
-use Artemis::Installer::Base;
+use Tapper::PRC::Testcontrol;
+use Tapper::Installer::Base;
 
 if (@ARGV and $ARGV[0] eq "stop") {
         exit 0;
@@ -21,10 +21,10 @@ Log::Log4perl::init(\$logconf);
 
 
 if (@ARGV and $ARGV[0] eq "autoinstall") {
-        my $client = Artemis::Installer::Base->new;
+        my $client = Tapper::Installer::Base->new;
         $client->system_install("autoinstall");
 }
 
-my $prc = new Artemis::PRC::Testcontrol;
+my $prc = new Tapper::PRC::Testcontrol;
 $prc->run();
 

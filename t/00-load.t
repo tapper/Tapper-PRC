@@ -6,8 +6,8 @@ use warnings;
 use Test::More tests => 2;
 
 BEGIN {
-        use_ok( 'Artemis::PRC' );
-        use_ok( 'Artemis::PRC::Testcontrol' );
+        use_ok( 'Tapper::PRC' );
+        use_ok( 'Tapper::PRC::Testcontrol' );
 }
 
-diag( "Testing Artemis::PRC $Artemis::PRC::VERSION, Perl $], $^X" );
+diag( "Testing Tapper::PRC $Tapper::PRC::VERSION, Perl $], $^X" );

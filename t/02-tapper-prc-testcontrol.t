@@ -11,7 +11,7 @@ use Log::Log4perl;
 
 use Test::More tests => 12;
 
-my $config_bkup = 't/files/artemis.backup';
+my $config_bkup = 't/files/tapper.backup';
 
 # (XXX) need to find a way to include log4perl into tests to make sure no
 # errors reported through this framework are missed
@@ -23,21 +23,21 @@ log4perl.appender.root.layout = SimpleLayout";
 Log::Log4perl->init(\$string);
 
 
-BEGIN { use_ok('Artemis::PRC::Testcontrol'); }
+BEGIN { use_ok('Tapper::PRC::Testcontrol'); }
 
 
 
-my $mock_control = new Test::MockModule('Artemis::PRC::Testcontrol');
+my $mock_control = new Test::MockModule('Tapper::PRC::Testcontrol');
 $mock_control->mock('nfs_mount', sub { return(0);});
 
-my $mock_prc = new Test::MockModule('Artemis::PRC');
+my $mock_prc = new Test::MockModule('Tapper::PRC');
 $mock_prc->mock('log_and_exec', sub { return(0);});
 
 
 my $fh          = File::Temp->new();
 my $config_file = $fh->filename;
 system("cp",$config_bkup, $config_file) == 0 or die "Can't copy config file:$!";
-$ENV{ARTEMIS_CONFIG} = $config_file;
+$ENV{TAPPER_CONFIG} = $config_file;
 
 my $server;
 my @content;
@@ -47,7 +47,7 @@ my $pid=fork();
 if ($pid==0) {
         sleep(2); #bad and ugly to prevent race condition
 
-        my $testcontrol = new Artemis::PRC::Testcontrol;
+        my $testcontrol = new Tapper::PRC::Testcontrol;
         $testcontrol->run();
         $testcontrol->run();
         exit 0;
@@ -98,7 +98,7 @@ is ($config->{reboot_counter}, 2, "Writing reboot count back to config");
 #
 ########################################################
 
-$ENV{ARTEMIS_CONFIG} = "t/files/multitest.conf";
+$ENV{TAPPER_CONFIG} = "t/files/multitest.conf";
 
 @content=();
 
@@ -106,7 +106,7 @@ $pid=fork();
 if ($pid==0) {
         sleep(2); #bad and ugly to prevent race condition
 
-        my $testcontrol = new Artemis::PRC::Testcontrol;
+        my $testcontrol = new Tapper::PRC::Testcontrol;
         $testcontrol->run();
         exit 0;
 

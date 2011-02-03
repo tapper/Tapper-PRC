@@ -20,10 +20,10 @@ log4perl.appender.root.layout = SimpleLayout";
 Log::Log4perl->init(\$string);
 
 
-BEGIN { use_ok('Artemis::PRC'); }
+BEGIN { use_ok('Tapper::PRC'); }
 
 
-my $prc = new Artemis::PRC;
+my $prc = new Tapper::PRC;
 
 my ($error, $output) = $prc->log_and_exec('echo test');
 is ($output,'test','log_and_exec, array mode');

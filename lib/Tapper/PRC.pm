@@ -1,4 +1,4 @@
-package Artemis::PRC;
+package Tapper::PRC;
 
 use strict;
 use warnings;
@@ -16,11 +16,11 @@ our $VERSION = '2.000109';
 
 =head1 NAME
 
-Artemis::PRC - Base class for running test programs
+Tapper::PRC - Base class for running test programs
 
 =head1 SYNOPSIS
 
- use Artemis::PRC;
+ use Tapper::PRC;
 
 =head1 FUNCTIONS
 
@@ -125,7 +125,7 @@ None.
 
 You can find documentation for this module with the perldoc command.
 
- perldoc Artemis
+ perldoc Tapper
 
 
 =head1 ACKNOWLEDGEMENTS

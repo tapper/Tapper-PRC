@@ -26,10 +26,10 @@ log4perl.appender.root.layout = SimpleLayout";
 Log::Log4perl->init(\$string);
 
 
-BEGIN { use_ok('Artemis::PRC::Testcontrol'); }
+BEGIN { use_ok('Tapper::PRC::Testcontrol'); }
 
-my $testcontrol = Artemis::PRC::Testcontrol->new();
-isa_ok($testcontrol, 'Artemis::PRC::Testcontrol', 'New object');
+my $testcontrol = Tapper::PRC::Testcontrol->new();
+isa_ok($testcontrol, 'Tapper::PRC::Testcontrol', 'New object');
 
 
 my $output_dir = File::Temp::tempdir( CLEANUP => 1 );
@@ -54,7 +54,7 @@ my $retval;
 # test wait_for_sync, only if told to
 SKIP:
 {
-        skip 'Can not test syncing without peer',1 unless $ENV{ARTEMIS_SYNC_TESTING};
+        skip 'Can not test syncing without peer',1 unless $ENV{TAPPER_SYNC_TESTING};
         $testcontrol->cfg();
         $retval = $testcontrol->wait_for_sync(['wotan']);
         is($retval, 0, 'Synced');
@@ -64,7 +64,7 @@ SKIP:
 
 # Mock actual execution of testprogram
 my @execute_options;
-my $mock_testcontrol = Test::MockModule->new('Artemis::PRC::Testcontrol');
+my $mock_testcontrol = Test::MockModule->new('Tapper::PRC::Testcontrol');
 $mock_testcontrol->mock('testprogram_execute',sub{(undef, @execute_options) = @_;return 0});
 $mock_testcontrol->mock('mcp_inform',sub{return 0;});
 $retval = $testcontrol->testprogram_execute();
@@ -75,14 +75,14 @@ $retval = $testcontrol->control_testprogram();
 is($retval, 0, 'Running control_testprogram');
 is_deeply(\@execute_options, ['/bin/true', 129600, "$output_dir/1234/test/", ('--tests','-v')], 'Calling testprogram_execute');
 
-superhashof(\%ENV, { ARTEMIS_TESTRUN => 1234,
-                     ARTEMIS_SERVER => 'localhost',
-                     ARTEMIS_HOSTNAME => 'localhost',
-                     ARTEMIS_REBOOT_COUNTER => 0,
-                     ARTEMIS_MAX_REBOOT => 0,
-                     ARTEMIS_GUEST_NUMBER => 0,
-                     ARTEMIS_OUTPUT_PATH => $output_dir."/1234/test",
-                     ARTEMIS_SYNC_FILE => '/dev/null'},
+superhashof(\%ENV, { TAPPER_TESTRUN => 1234,
+                     TAPPER_SERVER => 'localhost',
+                     TAPPER_HOSTNAME => 'localhost',
+                     TAPPER_REBOOT_COUNTER => 0,
+                     TAPPER_MAX_REBOOT => 0,
+                     TAPPER_GUEST_NUMBER => 0,
+                     TAPPER_OUTPUT_PATH => $output_dir."/1234/test",
+                     TAPPER_SYNC_FILE => '/dev/null'},
             'Setting environment');
 
 done_testing();

@@ -3,8 +3,8 @@ use warnings;
 
 use inc::Module::Install;
 
-name     'Artemis-PRC';
-all_from 'lib/Artemis/PRC.pm';
+name     'Tapper-PRC';
+all_from 'lib/Tapper/PRC.pm';
 author   'OSRC SysInt Team <osrc-sysint@elbe.amd.com>';
 license  'freebsd';
 
@@ -12,11 +12,11 @@ build_requires 'Test::Fixture::DBIC::Schema' => 0;
 build_requires 'Test::Perl::Critic'          => 0;
 build_requires 'Test::MockModule'            => 0;
 build_requires 'Test::More'                  => 0;
-build_requires 'Artemis::Test'               => '2.010005';
+build_requires 'Tapper::Test'               => '2.010005';
 
 requires 'perl'               => '5.010';
 requires 'Tapper::Base'      => '0.010008';
-requires 'Artemis::Remote'    => '1.000001';
+requires 'Tapper::Remote'    => '1.000001';
 requires 'Moose'              => 0;
 requires 'Log::Log4perl'      => 0;
 requires 'List::Util'         => 0;
