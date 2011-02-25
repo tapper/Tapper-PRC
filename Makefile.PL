@@ -14,6 +14,8 @@ build_requires 'Test::MockModule'            => 0;
 build_requires 'Test::More'                  => 0;
 build_requires 'Tapper::Test'               => '2.010005';
 
+author_requires 'Module::Install::WriteAll';
+
 requires 'perl'               => '5.010';
 requires 'Tapper::Base'      => '0.010008';
 requires 'Tapper::Remote'    => '1.000001';
