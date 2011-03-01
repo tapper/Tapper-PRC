@@ -16,7 +16,7 @@ our $VERSION = '3.000001';
 
 =head1 NAME
 
-Tapper::PRC - Base class for running test programs
+Tapper::PRC - Tapper - Program run control for test program automation
 
 =head1 SYNOPSIS
 
