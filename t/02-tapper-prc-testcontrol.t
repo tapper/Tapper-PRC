@@ -45,7 +45,8 @@ my @content;
 
 my $pid=fork();
 if ($pid==0) {
-        sleep(2); #bad and ugly to prevent race condition
+        diag "Sleep a bit to prevent timout race conditions...";
+        sleep(20);
 
         my $testcontrol = new Tapper::PRC::Testcontrol;
         $testcontrol->run();
@@ -57,8 +58,8 @@ if ($pid==0) {
                                         LocalPort => 1337);
         ok($server, 'create socket');
         eval{
-                local $SIG{ALRM}=sub{die("timeout of 5 seconds reached while waiting for reboot test.");};
-                alarm(5);
+                local $SIG{ALRM}=sub{die("timeout of 50 seconds reached while waiting for reboot test.");};
+                alarm(50);
                 my $msg_sock = $server->accept();
                 while (my $line=<$msg_sock>) {
                         $content[0].=$line;
@@ -104,7 +105,8 @@ $ENV{TAPPER_CONFIG} = "t/files/multitest.conf";
 
 $pid=fork();
 if ($pid==0) {
-        sleep(2); #bad and ugly to prevent race condition
+        diag "Sleep a bit to prevent timout race conditions...";
+        sleep(20);
 
         my $testcontrol = new Tapper::PRC::Testcontrol;
         $testcontrol->run();
@@ -112,8 +114,8 @@ if ($pid==0) {
 
 } else {
         eval{
-                local $SIG{ALRM}=sub{die("timeout of 5 seconds reached while waiting for multiple test scripts messages.");};
-                alarm(5);
+                local $SIG{ALRM}=sub{die("timeout of 50 seconds reached while waiting for multiple test scripts messages.");};
+                alarm(50);
                 my $msg_sock = $server->accept();
                 while (my $line=<$msg_sock>) {
                         $content[0].=$line;
