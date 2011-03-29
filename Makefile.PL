@@ -25,4 +25,6 @@ requires 'File::Path'         => 0;
 requires 'common::sense'      => 0;
 requires 'YAML'               => 0;
 
+install_script glob('bin/*');
+
 WriteAll;
