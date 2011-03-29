@@ -12,11 +12,11 @@ extends 'Tapper::Base';
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '2.000109';
+our $VERSION = '3.000005';
 
 =head1 NAME
 
-Tapper::PRC - Base class for running test programs
+Tapper::PRC - Tapper - Program run control for test program automation
 
 =head1 SYNOPSIS
 
@@ -115,7 +115,7 @@ sub mcp_error
 
 =head1 AUTHOR
 
-OSRC SysInt Team, C<< <osrc-sysint at elbe.amd.com> >>
+AMD OSRC Tapper Team, C<< <tapper at amd64.org> >>
 
 =head1 BUGS
 
@@ -133,7 +133,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 OSRC SysInt Team, all rights reserved.
+Copyright 2008-2011 AMD OSRC Tapper Team, all rights reserved.
 
-This program is released under the following license: restrictive
+This program is released under the following license: freebsd
 
