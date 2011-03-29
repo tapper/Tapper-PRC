@@ -7,7 +7,6 @@ use Test::MockModule;
 use YAML::Syck;
 
 use Log::Log4perl;
-use Tapper::Config;
 
 use Test::More tests => 5;
 
