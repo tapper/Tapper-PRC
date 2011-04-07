@@ -12,7 +12,7 @@ extends 'Tapper::Base';
 
 with 'MooseX::Log::Log4perl';
 
-our $VERSION = '3.000005';
+our $VERSION = '3.000010';
 
 =head1 NAME
 
