@@ -12,13 +12,13 @@ build_requires 'Test::Fixture::DBIC::Schema' => 0;
 build_requires 'Test::Perl::Critic'          => 0;
 build_requires 'Test::MockModule'            => 0;
 build_requires 'Test::More'                  => 0;
-build_requires 'Tapper::Test' => 3.000010";
+build_requires 'Tapper::Test' => "3.000010";
 
 author_requires 'Module::Install::WriteAll';
 
 requires 'perl'               => '5.010';
-requires 'Tapper::Base' => 3.000010";
-requires 'Tapper::Remote' => 3.000010";
+requires 'Tapper::Base' => "3.000010";
+requires 'Tapper::Remote' => "3.000010";
 requires 'Moose'              => 0;
 requires 'Log::Log4perl'      => 0;
 requires 'List::Util'         => 0;
