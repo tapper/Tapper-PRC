@@ -56,8 +56,11 @@ sub testprogram_execute
         # try to catch non executables early
         return("tried to execute $program which does not exist") unless -e $program;
 
-        system ("chmod", "ugo+x", $program);
-        return("tried to execute $program which is not an execuable") unless -x $program;
+        
+        if (not -x $program) { 
+                system ("chmod", "ugo+x", $program);
+                return("tried to execute $program which is not an execuable");
+        }
 
         return("tried to execute $program which is a directory") if -d $program;
         return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
