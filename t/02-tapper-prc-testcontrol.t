@@ -55,7 +55,7 @@ if ($pid==0) {
 
 } else {
         $server = IO::Socket::INET->new(Listen    => 5,
-                                        LocalPort => 1337);
+                                        LocalPort => 13377);
         ok($server, 'create socket');
         eval{
                 local $SIG{ALRM}=sub{die("timeout of 50 seconds reached while waiting for reboot test.");};
