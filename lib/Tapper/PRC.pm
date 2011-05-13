@@ -7,6 +7,7 @@ use IO::Socket::INET;
 use YAML::Syck;
 use Moose;
 use Log::Log4perl;
+use Mojo::Util qw/url_escape url_unescape/;
 
 extends 'Tapper::Base';
 
@@ -48,15 +49,19 @@ sub mcp_send
         my $server = $self->cfg->{mcp_server} or return "MCP host unknown";
         my $port   = $self->cfg->{mcp_port} || $self->cfg->{port} || 1337;
         $message->{testrun_id} ||= $self->cfg->{test_run};
-        my $yaml = Dump($message);
-        
+        my $url = "/";
+        foreach my $key (keys %$message) {
+                url_escape $message->{$key};
+        }
+        $url   .= join "/", "state",$message->{state}, %$message;
+
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
 					     PeerPort => $port,
 					     Proto    => 'tcp')){
-		print $sock ("$yaml");
+		$sock->print("GET $url HTTP/1.0\r\n\r\n");
 		close $sock;
 	} else {
-                return("Can't connect to MCP: $!");
+                return("Can't connect to MCP: $!\r\n\r\n");
 	}
         return(0);
 }
