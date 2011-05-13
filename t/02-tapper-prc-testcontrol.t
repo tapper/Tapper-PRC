@@ -85,7 +85,7 @@ if ($pid==0) {
         my @msg = ({testrun_id => 1234, prc_number => 0, state => "start-testing"},
                    {testrun_id => 1234, prc_number => 0, state => 'reboot', count => 0, max_reboot => 2},
                    {testrun_id => 1234, prc_number => 0, state => 'reboot', count => 1, max_reboot => 2});
-        
+
         for(my $i=0; $i < int @content; $i++){
                 if ($content[$i] =~ m|GET /(.+) HTTP/1.0|g) {
                         my %params    = split("/", $1);
