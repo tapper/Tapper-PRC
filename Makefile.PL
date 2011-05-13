@@ -26,6 +26,7 @@ requires 'IPC::Open3'         => 0;
 requires 'File::Path'         => 0;
 requires 'common::sense'      => 0;
 requires 'YAML'               => "0.72";
+requires 'Mojo::Util';
 
 repository 'git://github.com/amd/Tapper-Reports-PRC.git';
 bugtracker 'http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Tapper-PRC';

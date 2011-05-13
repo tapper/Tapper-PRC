@@ -76,10 +76,13 @@ if ($pid==0) {
                         while (my $line=<$msg_sock>) {
                                 $content.=$line;
                         }
-                        my $hash = Load($content);
-                        push @content, $hash;
-                        last MESSAGE if $hash->{state} eq 'end-testing';
-                        
+                        if ($content =~ m|GET /(.+) HTTP/1.0|g) {
+                                my %params    = split("/", $1);
+                                push @content, \%params;
+                                last MESSAGE if $params{state} eq 'end-testing';
+                        } else {
+                                fail "Content is not HTTP";
+                        }
                 }
                 alarm(0);
         };
