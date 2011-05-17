@@ -7,7 +7,8 @@ use IO::Socket::INET;
 use YAML::Syck;
 use Moose;
 use Log::Log4perl;
-use Mojo::Util qw/url_escape url_unescape/;
+use URI::Escape;
+
 
 extends 'Tapper::Base';
 
@@ -49,16 +50,33 @@ sub mcp_send
         my $server = $self->cfg->{mcp_server} or return "MCP host unknown";
         my $port   = $self->cfg->{mcp_port} || $self->cfg->{port} || 1337;
         $message->{testrun_id} ||= $self->cfg->{test_run};
-        my $url = "/";
+        my %headers;
+
+        my $url = "GET /state/";
+
+        # state always needs to be first URL part because server uses it as filter
+        $url   .= $message->{state} || 'unknown';
+        delete $message->{state};
+
         foreach my $key (keys %$message) {
-                url_escape $message->{$key};
+                if ($message->{$key} =~ m|/| ) {
+                        $headers{$key} = $message->{$key};
+                } else {
+                        $url .= "/$key/";
+                        $url .= uri_escape($message->{$key});
+                }
         }
-        $url   .= join "/", "state",$message->{state}, %$message;
+        $url .= " HTTP/1.0\r\n";
+        foreach my $header (keys %headers) {
+                $url .= "X-Tapper-$header: ";
+                $url .= $headers{$header};
+                $url .= "\r\n";
+        }
 
 	if (my $sock = IO::Socket::INET->new(PeerAddr => $server,
 					     PeerPort => $port,
 					     Proto    => 'tcp')){
-		$sock->print("GET $url HTTP/1.0\r\n\r\n");
+		$sock->print("$url\r\n");
 		close $sock;
 	} else {
                 return("Can't connect to MCP: $!\r\n\r\n");
