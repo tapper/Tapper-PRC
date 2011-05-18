@@ -59,7 +59,7 @@ if ($pid==0) {
         ok($server, 'create socket');
         eval{
                 local $SIG{ALRM}=sub{die("timeout of 50 seconds reached while waiting for reboot test.");};
-                alarm($ENV{TAPPER_SLEEPTIME}*3 || 0);
+                alarm($ENV{TAPPER_SLEEPTIME} || 50);
                 my $msg_sock = $server->accept();
                 while (my $line=<$msg_sock>) {
                         $content[0].=$line;
