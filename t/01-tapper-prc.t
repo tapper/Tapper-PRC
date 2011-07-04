@@ -13,7 +13,7 @@ use Test::More tests => 5;
 # (XXX) need to find a way to include log4perl into tests to make sure no
 # errors reported through this framework are missed
 my $string = "
-log4perl.rootLogger           = INFO, root
+log4perl.rootLogger           = FATAL, root
 log4perl.appender.root        = Log::Log4perl::Appender::Screen
 log4perl.appender.root.stderr = 1
 log4perl.appender.root.layout = SimpleLayout";
