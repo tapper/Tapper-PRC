@@ -24,6 +24,7 @@ requires 'Log::Log4perl'      => 0;
 requires 'List::Util'         => 0;
 requires 'IPC::Open3'         => 0;
 requires 'File::Path'         => 0;
+requires 'File::Temp'         => 0;
 requires 'common::sense'      => 0;
 requires 'YAML'               => "0.72";
 requires 'Mojo::Util';
