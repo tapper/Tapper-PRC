@@ -1,7 +1,7 @@
 package Tapper::PRC::Testcontrol;
 
 use IPC::Open3;
-use File::Path;
+use File::Temp qw/tempdir/;
 use Moose;
 use YAML 'LoadFile';
 
@@ -253,7 +253,6 @@ sub control_testprogram
 
 
 
-        my $retval;
         my $test_run         = $self->cfg->{test_run};
         my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
         my @testprogram_list;
@@ -264,11 +263,12 @@ sub control_testprogram
         $out_dir.="guest-".$self->{cfg}->{guest_number}."/" if $self->{cfg}->{guest_number};
 
 
-        mkpath($out_dir, {error => \$retval}) if not -d $out_dir;
-        foreach my $diag (@$retval) {
-                my ($file, $message) = each %$diag;
-                return "general error: $message\n" if $file eq '';
-                return "Can't create $file: $message";
+        my $error = $self->makedir($out_dir);
+
+        # can't create output directory. Make 
+        if ($error) {
+                $self->log->warn($error);
+                $out_dir = tempdir( CLEANUP => 1 );
         }
 
         $ENV{TAPPER_OUTPUT_PATH}=$out_dir;
