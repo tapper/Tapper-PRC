@@ -181,14 +181,8 @@ sub create_log
                 # every guest gets its own subdirectory
                 my $guestoutdir="$outdir/guest-$guest_number/";
 
-                if (not -d $guestoutdir) {
-                        mkpath($guestoutdir, {error => \$retval});
-                        foreach my $diag (@$retval) {
-                                my ($file, $message) = each %$diag;
-                                return "general error: $message\n" if $file eq '';
-                                return "Can't create $file: $message";
-                        }
-                }
+                $error = $self->makedir($guestoutdir);
+                return $error if $error;
 
                 $self->log_and_exec("touch $guestoutdir/console");
                 $self->log_and_exec("chmod 666 $guestoutdir/console");
@@ -214,12 +208,10 @@ sub nfs_mount
 {
         my ($self) = @_;
         my ($error, $retval);
-        File::Path->mkpath($self->cfg->{paths}{prc_nfs_mountdir}, {error => \$error}) if not -d $self->cfg->{paths}{prc_nfs_mountdir};
-        foreach my $diag (@$error) {
-                my ($file, $message) = each %$diag;
-                return "general error: $message\n" if $file eq '';
-                return "Can't create $file: $message";
-        }
+
+        $error = $self->makedir($self->cfg->{paths}{prc_nfs_mountdir});
+        return $error if $error;
+        
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{paths}{prc_nfs_mountdir});
 	return 0 if not $error;
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
