@@ -8,7 +8,10 @@ use File::Temp;
 use YAML::Syck;
 use Data::Dumper;
 
+use Tapper::Config;
+
 use Test::More;
+
 
 # (XXX) need to find a way to include log4perl into tests to make sure no
 # errors reported through this framework are missed
@@ -21,7 +24,7 @@ Log::Log4perl->init(\$string);
 
 
 BEGIN { use_ok('Tapper::PRC::Testcontrol'); }
-
+my $tapper_cfg = Tapper::Config->subconfig;
 
 my $prc = Tapper::PRC::Testcontrol->new();
 
@@ -29,7 +32,7 @@ my $output_dir = File::Temp::tempdir( CLEANUP => 1 );
 my $config = {
               test_run => 1234,
               mcp_server => 'localhost',
-              mcp_port   => 1337,
+              mcp_port   => $tapper_cfg->{mcp_port},
               report_server => 'localhost',
               hostname => 'localhost',
               reboot_counter => 0,
@@ -62,12 +65,12 @@ if ($pid==0) {
         exit 0;
 } else {
         my $server = IO::Socket::INET->new(Listen    => 5,
-                                           LocalPort => 1337);
+                                           LocalPort => $tapper_cfg->{mcp_port});
         ok($server, 'create socket');
         my @content;
         eval{
                 $SIG{ALRM}=sub{die("timeout\n");};
-                alarm(0);
+                alarm(10);
 
         MESSAGE:
                 while (1) {
