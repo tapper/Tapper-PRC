@@ -27,7 +27,7 @@ Log::Log4perl::init(\$logconf);
 
 
 my $client = Tapper::Installer::Base->new;
-$client->system_install("autoinstall");
+$client->system_install("ssh");
 
 my $prc = new Tapper::PRC::Testcontrol;
 $prc->run();
