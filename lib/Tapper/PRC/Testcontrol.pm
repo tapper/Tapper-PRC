@@ -436,8 +436,6 @@ sub run
 
         if ($self->{cfg}->{guest_count}) {
 
-                $config->{prc_count} = $config->{guest_count} + 1; # always have a PRC in host
-
                 $retval = $self->guest_start();
                 $self->log->error($retval) if $retval;
         }
