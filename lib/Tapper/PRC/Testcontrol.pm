@@ -361,7 +361,7 @@ sub wait_for_sync
         my $sync_srv = IO::Socket::INET->new( LocalPort => $port, Listen => 5, );
         my $select = IO::Select->new($sync_srv);
 
-
+        $self->log->info("Trying to sync with: ". join(", ",sort keys %peerhosts));
 
         foreach my $host (keys %peerhosts) {
                 my $remote = IO::Socket::INET->new(PeerPort => $port, PeerAddr => $host,);
@@ -382,6 +382,8 @@ sub wait_for_sync
                                 $self->log->warn(qq(Received sync request from host "$remotehost" which is not in our peerhost list. Request was sent from ),$msg_srv->peerhost);
                         }
                 }
+                $self->log->debug("In sync with $host.");
+
         }
 
         while (%peerhosts) {
@@ -393,9 +395,12 @@ sub wait_for_sync
                         $msg_srv->close();
                         if ($peerhosts{$remotehost}) {
                                 delete($peerhosts{$remotehost});
+                                $self->log->debug("In sync with $remotehost.");
                         } else {
                                 $self->log->warn(qq(Received sync request from host "$remotehost" which is not in our peerhost list. Request was sent from ),$msg_srv->peerhost);
                         }
+                } else {
+                        # handle timeout here when can_read() has a timeout eventually
                 }
         }
         return 0;
