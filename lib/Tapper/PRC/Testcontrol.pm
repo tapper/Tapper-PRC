@@ -114,7 +114,7 @@ moment.
 sub guest_start
 {
         my ($self) = @_;
-        my $retval;
+        my ($error, $retval);
  GUEST:
         for (my $i=0; $i<=$#{$self->cfg->{guests}}; $i++) {
                 my $guest = $self->cfg->{guests}->[$i];
@@ -144,11 +144,43 @@ sub guest_start
                                 next GUEST;
                         }
                 } elsif ($guest->{svm}){
+                        my $xm = `which xm`; chomp $xm;
                         $self->log->info("Try load Xen guest described in ",$guest->{svm});
-                        if (not (system("xm","create",$guest->{svm}) == 0)) {
-                                $retval = "Can't start xen guest described in $guest->{svm}";
-                                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
-                                                                 error => $retval});
+                        ($error, $retval) =  $self->log_and_exec($xm, 'create', $guest->{svm});
+                        if ($error) {
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                 error      => $retval});
+                                next GUEST;
+                        }
+                } elsif ($guest->{xen}) {
+                        $self->log->info("Try load Xen guest described in ",$guest->{xen});
+
+                        my $guest_file = $guest->{xen};
+                        if ($guest_file =~ m/^(.+)\.(?:xl|svm)$/) {
+                            $guest_file = $1;
+                        }
+
+                        my $xm = `which xm`; chomp $xm;
+                        my $xl = `which xl`; chomp $xl;
+
+                        if ( -e $xl ) {
+                                ($error, $retval) =  $self->log_and_exec($xl, 'create', $guest_file.".xl");
+                                if ($error) {
+                                        $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                         error      => $retval});
+                                        next GUEST;
+                                }
+                        } elsif ( -e $xm ) {
+                                ($error, $retval) =  $self->log_and_exec($xm, 'create', $guest_file.".svm");
+                                if ($error) {
+                                        $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                         error      => $retval});
+                                        next GUEST;
+                                }
+                        } else {
+                                $retval =  "Can not find both xm and xl.";
+                                $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
+                                                 error      => $retval});
                                 next GUEST;
                         }
                 }
