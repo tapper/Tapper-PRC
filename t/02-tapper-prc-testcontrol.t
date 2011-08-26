@@ -10,6 +10,8 @@ use YAML::Syck;
 use Log::Log4perl;
 
 use Test::More;
+use Tapper::Config;
+
 
 my $config_bkup = 't/files/tapper.backup';
 
@@ -55,7 +57,7 @@ if ($pid==0) {
 
 } else {
         $server = IO::Socket::INET->new(Listen    => 5,
-                                        LocalPort => 13377);
+                                        LocalPort => Tapper::Config->subconfig->{mcp_port});
         ok($server, 'create socket');
         eval{
                 local $SIG{ALRM}=sub{die("timeout of 50 seconds reached while waiting for reboot test.");};
