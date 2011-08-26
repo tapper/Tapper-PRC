@@ -78,7 +78,6 @@ if ($pid==0) {
                         $content[2].=$line;
                 }
 
-
                 alarm(0);
         };
         is($@, '', 'Get state messages in time');
