@@ -56,8 +56,8 @@ sub testprogram_execute
         # try to catch non executables early
         return("tried to execute $program which does not exist") unless -e $program;
 
-        
-        if (not -x $program) { 
+
+        if (not -x $program) {
                 system ("chmod", "ugo+x", $program);
                 return("tried to execute $program which is not an execuable");
         }
@@ -130,11 +130,11 @@ sub guest_start
                                 if (not -x $startscript) {
                                         unless (system ("chmod", "ugo+x", $startscript) == 0) {
                                                 $self->mcp_send({prc_number => ($i+1), state => 'error-guest',
-                                                                 error => 
+                                                                 error =>
                                                                  return qq(Unable to set executable bit on "$startscript": $!)
                                                                 });
                                                 next GUEST;
-                                        }  
+                                        }
                                 }
                         }
                         if (not system($startscript) == 0 ) {
@@ -211,7 +211,7 @@ sub nfs_mount
 
         $error = $self->makedir($self->cfg->{paths}{prc_nfs_mountdir});
         return $error if $error;
-        
+
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{paths}{prc_nfs_mountdir});
 	return 0 if not $error;
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
@@ -257,7 +257,7 @@ sub control_testprogram
 
         my $error = $self->makedir($out_dir);
 
-        # can't create output directory. Make 
+        # can't create output directory. Make
         if ($error) {
                 $self->log->warn($error);
                 $out_dir = tempdir( CLEANUP => 1 );
