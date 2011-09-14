@@ -33,7 +33,8 @@ Execute one testprogram. Handle all error conditions.
 @param string - program name
 @param int    - timeout
 @param string - output directory
-@param array of strings - parameters for test program
+@param arrayref of strings - parameters for test program
+@param hashref of strings - environment variables for test program
 
 @return success - 0
 @return error   - error string
@@ -42,7 +43,7 @@ Execute one testprogram. Handle all error conditions.
 
 sub testprogram_execute
 {
-        my ($self, $program, $timeout, $out_dir, @argv) = @_;
+        my ($self, $program, $timeout, $out_dir, $argv, $environment) = @_;
 
         my $progpath =  $self->cfg->{paths}{testprog_path};
         my $output   =  $program;
@@ -75,9 +76,10 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
+                %ENV = (%ENV, %$environment);
                 open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
                 open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
-                exec ($program, @argv) or syswrite($write,"$!\n");
+                exec ($program, @$argv) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
         } else {
@@ -266,12 +268,14 @@ sub control_testprogram
         $ENV{TAPPER_OUTPUT_PATH}=$out_dir;
 
         if ($self->cfg->{test_program}) {
-                my @argv;
-                @argv        = @{$self->cfg->{parameters}} if $self->cfg->{parameters};
+                my $argv;
+                my $environment;
+                $argv        = $self->cfg->{parameters} if $self->cfg->{parameters};
+                $environment = $self->cfg->{environment} if $self->cfg->{environment};
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
-                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => \@argv, timeout => $timeout, runtime => $runtime});
+                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => $argv, environment => $environment, timeout => $timeout, runtime => $runtime});
         }
 
 
@@ -284,9 +288,11 @@ sub control_testprogram
                 $testprogram->{program} ||= $testprogram->{test_program};
                 $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
 
-                my @argv;
-                @argv      = @{$testprogram->{parameters}} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
-                my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, @argv);
+                my $argv = [];
+                my $environment = {};
+                $argv      = $testprogram->{parameters} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
+                $environment = $testprogram->{environment} if defined($testprogram->{environment}) and ref($testprogram->{environment}) eq "HASH";
+                my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, $argv, $environment);
 
                 if ($retval) {
                         $self->mcp_inform({testprogram => $i, state => 'error-testprogram', error => $retval});
