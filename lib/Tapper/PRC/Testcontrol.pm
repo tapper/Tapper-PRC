@@ -217,7 +217,8 @@ sub nfs_mount
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{paths}{prc_nfs_mountdir});
 	return 0 if not $error;
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
-        return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$retval" if $error;
+        # report error, but only if not already mounted
+        return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$retval" if ($error and ! -d $self->cfg->{paths}{prc_nfs_mountdir}."/live");
         return 0;
 }
 
