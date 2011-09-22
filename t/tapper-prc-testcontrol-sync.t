@@ -73,7 +73,12 @@ is($retval, 0, 'Mocking testprogram_execute');
 
 $retval = $testcontrol->control_testprogram();
 is($retval, 0, 'Running control_testprogram');
-is_deeply(\@execute_options, ['/bin/true', 129600, "$output_dir/1234/test/", ('--tests','-v')], 'Calling testprogram_execute');
+cmp_deeply( shift @execute_options, superhashof({program    => '/bin/true',
+                                              timeout    => 129600, 
+                                              out_dir    => "$output_dir/1234/test/", 
+                                              parameters => ['--tests','-v'],
+                                              runtime    => 72000}),
+           'Calling testprogram_execute');
 
 superhashof(\%ENV, { TAPPER_TESTRUN => 1234,
                      TAPPER_SERVER => 'localhost',
