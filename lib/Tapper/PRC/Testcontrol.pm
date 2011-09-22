@@ -1,6 +1,7 @@
 package Tapper::PRC::Testcontrol;
 
 use IPC::Open3;
+use File::Copy;
 use File::Temp qw/tempdir/;
 use Moose;
 use YAML 'LoadFile';
@@ -68,6 +69,12 @@ sub testprogram_execute
         return("tried to execute $program which is a directory") if -d $program;
         return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
 
+        foreach my $file (@{$test_program->{upload_before} || [] }) {
+                my $target_name =~ s|[^A-Za-z0-9_-]|_|g;
+                $target_name = $test_program->{out_dir}.'/before/'.$target_name;
+                File::Copy::copy($file, $target_name);
+        }
+
         $self->log->info("Try to execute test suite $program");
 
         pipe (my $read, my $write);
@@ -94,6 +101,12 @@ sub testprogram_execute
                 waitpid($pid,0);
                 my $retval = $?;
                 alarm(0);
+
+                foreach my $file (@{$test_program->{upload_after} || [] }) {
+                        my $target_name =~ s|[^A-Za-z0-9_-]|_|g;
+                        $target_name = $test_program->{out_dir}.'/after/'.$target_name;
+                        File::Copy::copy($file, $target_name);
+                }
                 return "Killed $program after $test_program->{timeout} seconds" if $killed;
                 if ( $retval ) {
                         my $error;
@@ -310,7 +323,14 @@ sub control_testprogram
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
-                push (@testprogram_list, {program => $self->cfg->{test_program}, parameters => $argv, environment => $environment, timeout => $timeout, runtime => $runtime});
+                push (@testprogram_list, {program => $self->cfg->{test_program}, 
+                                          parameters => $argv, 
+                                          environment => $environment, 
+                                          timeout => $timeout, 
+                                          runtime => $runtime, 
+                                          upload_before => $self->cfg->{upload_before}, 
+                                          upload_after => $self->cfg->{upload_after}, 
+                                         });
         }
 
 
