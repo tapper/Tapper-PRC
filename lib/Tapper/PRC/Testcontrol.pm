@@ -30,11 +30,12 @@ Tapper::PRC::Testcontrol - Control running test programs
 
 Execute one testprogram. Handle all error conditions.
 
-@param string - program name
-@param int    - timeout
-@param string - output directory
-@param arrayref of strings - parameters for test program
-@param hashref of strings - environment variables for test program
+@param hash ref - contains all config options for program to execute
+* program     - program name
+* timeout     - timeout in seconds
+* outdir      - output directory
+* parameters  - arrayref of strings - parameters for test program
+* environment - hashref of strings - environment variables for test program
 
 @return success - 0
 @return error   - error string
@@ -43,12 +44,13 @@ Execute one testprogram. Handle all error conditions.
 
 sub testprogram_execute
 {
-        my ($self, $program, $timeout, $out_dir, $argv, $environment) = @_;
+        my ($self, $test_program) = @_;
 
+        my $program  = $test_program->{program};
         my $progpath =  $self->cfg->{paths}{testprog_path};
         my $output   =  $program;
         $output      =~ s|[^A-Za-z0-9_-]|_|g;
-        $output      =  $out_dir.$output;
+        $output      =  $test_program->{out_dir}.$output;
 
 
         # make relative paths absolute
@@ -76,10 +78,10 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
-                %ENV = (%ENV, %$environment);
+                %ENV = (%ENV, %{$test_program->{environment} || {} });
                 open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
                 open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
-                exec ($program, @$argv) or syswrite($write,"$!\n");
+                exec ($program, @{$test_program->{argv} || []}) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
         } else {
@@ -88,11 +90,11 @@ sub testprogram_execute
                 my $killed;
                 # (XXX) better create a process group an kill this
                 local $SIG{ALRM}=sub{$killed=1;kill (15,$pid); kill (9,$pid);};
-                alarm ($timeout);
+                alarm ($test_program->{timeout});
                 waitpid($pid,0);
                 my $retval = $?;
                 alarm(0);
-                return "Killed $program after $timeout seconds" if $killed;
+                return "Killed $program after $test_program->{timeout} seconds" if $killed;
                 if ( $retval ) {
                         my $error;
                         sysread($read,$error, $MAXREAD);
@@ -318,14 +320,14 @@ sub control_testprogram
                 $ENV{TAPPER_TS_RUNTIME}      = $testprogram->{runtime} || 0;
 
                 # unify differences in program vs. program_list vs. virt
-                $testprogram->{program} ||= $testprogram->{test_program};
-                $testprogram->{timeout} ||= $testprogram->{timeout_testprogram};
+                $testprogram->{program}   ||= $testprogram->{test_program};
+                $testprogram->{timeout}   ||= $testprogram->{timeout_testprogram};
 
-                my $argv = [];
-                my $environment = {};
-                $argv      = $testprogram->{parameters} if defined($testprogram->{parameters}) and ref($testprogram->{parameters}) eq "ARRAY";
-                $environment = $testprogram->{environment} if defined($testprogram->{environment}) and ref($testprogram->{environment}) eq "HASH";
-                my $retval = $self->testprogram_execute($testprogram->{program}, int($testprogram->{timeout} || 0), $out_dir, $argv, $environment);
+                # create hash for testprogram_execute
+                $testprogram->{timeout}   ||= 0;
+                $testprogram->{out_dir}     = $out_dir;
+
+                my $retval = $self->testprogram_execute($testprogram);
 
                 if ($retval) {
                         $self->mcp_inform({testprogram => $i, state => 'error-testprogram', error => $retval});
