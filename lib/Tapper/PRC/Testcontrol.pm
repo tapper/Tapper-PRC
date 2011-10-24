@@ -342,6 +342,7 @@ sub control_testprogram
                 # unify differences in program vs. program_list vs. virt
                 $testprogram->{program}   ||= $testprogram->{test_program};
                 $testprogram->{timeout}   ||= $testprogram->{timeout_testprogram};
+                $testprogram->{argv}        = $testprogram->{parameters} if @{$testprogram->{parameters} || []};
 
                 # create hash for testprogram_execute
                 $testprogram->{timeout}   ||= 0;
