@@ -37,6 +37,7 @@ Execute one testprogram. Handle all error conditions.
 * outdir      - output directory
 * parameters  - arrayref of strings - parameters for test program
 * environment - hashref of strings - environment variables for test program
+* chdir       - string - where to chdir before executing the testprogram
 
 @return success - 0
 @return error   - error string
@@ -48,6 +49,7 @@ sub testprogram_execute
         my ($self, $test_program) = @_;
 
         my $program  = $test_program->{program};
+        my $chdir    = $test_program->{chdir};
         my $progpath =  $self->cfg->{paths}{testprog_path};
         my $output   =  $program;
         $output      =~ s|[^A-Za-z0-9_-]|_|g;
@@ -88,6 +90,7 @@ sub testprogram_execute
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
                 open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
                 open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                chdir $chdir if ($chdir && -d $chdir);
                 exec ($program, @{$test_program->{argv} || []}) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
@@ -318,12 +321,15 @@ sub control_testprogram
         if ($self->cfg->{test_program}) {
                 my $argv;
                 my $environment;
+                my $chdir;
                 $argv        = $self->cfg->{parameters} if $self->cfg->{parameters};
                 $environment = $self->cfg->{environment} if $self->cfg->{environment};
+                $chdir       = $self->cfg->{chdir} if $self->cfg->{chdir};
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
                 push (@testprogram_list, {program => $self->cfg->{test_program}, 
+                                          chdir => $chdir,
                                           parameters => $argv, 
                                           environment => $environment, 
                                           timeout => $timeout, 
