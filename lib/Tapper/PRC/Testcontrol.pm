@@ -5,6 +5,7 @@ use File::Copy;
 use File::Temp qw/tempdir/;
 use Moose;
 use YAML 'LoadFile';
+use File::Basename 'dirname';
 
 use common::sense;
 
@@ -90,7 +91,13 @@ sub testprogram_execute
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
                 open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
                 open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
-                chdir $chdir if ($chdir && -d $chdir);
+                if ($chdir) {
+                        if (-d $chdir) {
+                                chdir $chdir;
+                        } elsif ($chdir == "AUTO" and $program =~ m,^/, ) {
+                                chdir dirname($program);
+                        }
+                }
                 exec ($program, @{$test_program->{argv} || []}) or syswrite($write,"$!\n");
                 close $write;
                 exit -1;
