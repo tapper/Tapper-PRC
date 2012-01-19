@@ -6,6 +6,8 @@ use File::Temp qw/tempdir/;
 use Moose;
 use YAML 'LoadFile';
 use File::Basename 'dirname';
+use English '-no_match_vars';
+use IO::Handle;
 
 use common::sense;
 
@@ -27,6 +29,53 @@ Tapper::PRC::Testcontrol - Control running test programs
 =head1 FUNCTIONS
 
 =cut
+
+=head2 capture_handler_tap
+
+This function is a handler for the capture function. It handles capture
+requests of type 'tap'. This means the captured output is supposed to be
+TAP already and therefore no transformation is needed.
+
+@param file handle - opened file handle
+
+@return string - output in TAP format
+@return error  - die()
+
+=cut
+
+sub capture_handler_tap
+{
+        my ($self, $filename) = @_;
+        my $content;
+        open my $fh, '<', $filename or die "Can not open $filename to send captured report";
+        $fh->input_record_separator(undef);
+        $content = <$fh>;
+        close $fh;
+        return $content;
+}
+
+
+=head2 send_output
+
+Send the captured TAP output to the report receiver.
+
+@param string - TAP text
+
+=cut
+
+sub send_output
+{
+        my ($self, $text, $testprogram) = @_;
+        my $headerlines = join "\n",
+          (
+           "# Tapper-reportgroup-testrun: ".$self->cfg->{testrun_id},
+           "# Tapper-suite-name: ".(basename($testprogram->{program})),
+           "# Tapper-machine-name: ".$self->cfg->{hostname},
+          );
+
+        $self->tap_report_away($headerlines.$text);
+}
+
 
 =head2 testprogram_execute
 
@@ -117,6 +166,16 @@ sub testprogram_execute
                         $target_name = $test_program->{out_dir}.'/after/'.$target_name;
                         File::Copy::copy($file, $target_name);
                 }
+                if ($test_program->{capture}) {
+                        my $captured_output;
+                        given($test_program->{capture}) {
+                                when ('tap') { eval { $captured_output = $self->capture_handler_tap()}; return $@ if $@;};
+                                default      { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"};
+                        }
+                        my $error_msg =  $self->send_output($captured_output, $test_program);
+                        return $error_msg if $error_msg;
+                }
+
                 return "Killed $program after $test_program->{timeout} seconds" if $killed;
                 if ( $retval ) {
                         my $error;
@@ -335,14 +394,14 @@ sub control_testprogram
                 my $timeout  = $self->cfg->{timeout_testprogram} || 0;
                 $timeout     = int $timeout;
                 my $runtime  = $self->cfg->{runtime};
-                push (@testprogram_list, {program => $self->cfg->{test_program}, 
+                push (@testprogram_list, {program => $self->cfg->{test_program},
                                           chdir => $chdir,
-                                          parameters => $argv, 
-                                          environment => $environment, 
-                                          timeout => $timeout, 
-                                          runtime => $runtime, 
-                                          upload_before => $self->cfg->{upload_before}, 
-                                          upload_after => $self->cfg->{upload_after}, 
+                                          parameters => $argv,
+                                          environment => $environment,
+                                          timeout => $timeout,
+                                          runtime => $runtime,
+                                          upload_before => $self->cfg->{upload_before},
+                                          upload_after => $self->cfg->{upload_after},
                                          });
         }
 
