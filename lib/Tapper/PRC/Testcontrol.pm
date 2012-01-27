@@ -8,7 +8,7 @@ use YAML 'LoadFile';
 use File::Basename 'dirname';
 use English '-no_match_vars';
 use IO::Handle;
-
+use File::Basename 'basename';
 use common::sense;
 
 use Tapper::Remote::Config;
@@ -48,8 +48,7 @@ sub capture_handler_tap
         my ($self, $filename) = @_;
         my $content;
         open my $fh, '<', $filename or die "Can not open $filename to send captured report";
-        $fh->input_record_separator(undef);
-        $content = <$fh>;
+        { local $/; $content = <$fh> }
         close $fh;
         return $content;
 }
@@ -71,6 +70,7 @@ sub send_output
            "# Tapper-reportgroup-testrun: ".$self->cfg->{testrun_id},
            "# Tapper-suite-name: ".(basename($testprogram->{program})),
            "# Tapper-machine-name: ".$self->cfg->{hostname},
+           "",
           );
 
         $self->tap_report_away($headerlines.$text);
@@ -169,7 +169,7 @@ sub testprogram_execute
                 if ($test_program->{capture}) {
                         my $captured_output;
                         given($test_program->{capture}) {
-                                when ('tap') { eval { $captured_output = $self->capture_handler_tap()}; return $@ if $@;};
+                                when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output.stdout")}; return $@ if $@;};
                                 default      { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"};
                         }
                         my $error_msg =  $self->send_output($captured_output, $test_program);
