@@ -60,6 +60,9 @@ Send the captured TAP output to the report receiver.
 
 @param string - TAP text
 
+@return success - 0
+@return error   - error string
+
 =cut
 
 sub send_output
@@ -73,7 +76,9 @@ sub send_output
            "",
           );
 
-        $self->tap_report_away($headerlines.$text);
+        my ($error, $message) = $self->tap_report_away($headerlines.$text);
+        return $message if $error;
+        return 0;
 }
 
 
