@@ -19,7 +19,7 @@ author_requires 'Module::Install::WriteAll';
 
 requires 'perl'               => '5.010';
 requires 'Tapper::Base' => "3.000010";
-requires 'Tapper::Remote' => "3.000010";
+requires 'Tapper::Remote' => "3.000011";
 requires 'Moose'              => 0;
 requires 'Log::Log4perl'      => 0;
 requires 'List::Util'         => 0;
