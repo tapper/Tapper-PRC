@@ -28,7 +28,7 @@ ok($server, 'create socket');
 
 my $cfg = {paths         => {testprog_path => getcwd().'/'} ,
            hostname      => 'testhost',
-           testrun_id    => 735710,
+           test_run      => 735710,
            report_server => 'localhost',
            report_port   => $server->sockport
           };
@@ -68,9 +68,9 @@ if ($pid==0) {
 
         waitpid($pid,0);
 
-        is($content, '# Tapper-reportgroup-testrun: 735710
-# Tapper-suite-name: xm
+        is($content, '# Tapper-suite-name: xm
 # Tapper-machine-name: testhost
+# Tapper-reportgroup-testrun: 735710
 expected text
 ', 'Upload TAP on behalf of testsuite (option capture => "tap")');
 }
