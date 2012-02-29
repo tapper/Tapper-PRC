@@ -428,7 +428,7 @@ sub control_testprogram
                 my $retval = $self->testprogram_execute($testprogram);
 
                 if ($retval) {
-                        my $error_msg = "Error while executing $testprogram->{program}: $retval"
+                        my $error_msg = "Error while executing $testprogram->{program}: $retval";
                         $self->mcp_inform({testprogram => $i, state => 'error-testprogram', error => $error_msg});
                         $self->log->info($error_msg);
                 } else {
