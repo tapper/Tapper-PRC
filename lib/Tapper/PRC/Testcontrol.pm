@@ -71,9 +71,9 @@ sub send_output
 
         # add missing minimum Tapper meta information
         my $headerlines = "";
-        $headerlines .= "# Tapper-suite-name:          ".basename($testprogram->{program})."\n" unless $captured_output =~ /\# Tapper-suite-name:/;
-        $headerlines .= "# Tapper-machine-name:        ".$self->cfg->{hostname}."\n"            unless $captured_output =~ /\# Tapper-machine-name:/;
-        $headerlines .= "# Tapper-reportgroup-testrun: ".$self->cfg->{test_run}."\n"            unless $captured_output =~ /\# Tapper-reportgroup-testrun:/;
+        $headerlines .= "# Tapper-suite-name: ".basename($testprogram->{program})."\n" unless $captured_output =~ /\# Tapper-suite-name:/;
+        $headerlines .= "# Tapper-machine-name: ".$self->cfg->{hostname}."\n"          unless $captured_output =~ /\# Tapper-machine-name:/;
+        $headerlines .= "# Tapper-reportgroup-testrun: ".$self->cfg->{test_run}."\n"   unless $captured_output =~ /\# Tapper-reportgroup-testrun:/;
 
         my ($error, $message) = $self->tap_report_away($headerlines.$captured_output);
         return $message if $error;
