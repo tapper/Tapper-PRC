@@ -546,6 +546,26 @@ sub wait_for_sync
         return 0;
 }
 
+=head2 send_keep_alive_loop
+
+Send keepalive messages to MCP in an endless loop.
+
+@param int - sleep time between two keepalives
+
+=cut
+
+sub send_keep_alive_loop
+{
+        my ($self, $sleeptime) = @_;
+        return unless $sleeptime;
+        while (1) {
+                $self->mcp_inform("keep-alive");
+                sleep($sleeptime);
+        }
+        return;
+}
+
+
 =head2 run
 
 Main function of Program Run Control.
@@ -560,6 +580,17 @@ sub run
         my $config = $producer->get_local_data("test-prc0");
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
+
+        if ($config->{times}{keep_alive_timeout}) {
+                $SIG{CHLD} = 'IGNORE';
+                my $pid = fork();
+                if ($pid == 0) {
+                        $self->send_keep_alive_loop($config->{times}{keep_alive_timeout});
+                        exit;
+                } else {
+                        $config->{keep_alive_child} = $pid;
+                }
+        }
 
         # ignore error
         $self->log_and_exec('ntpdate -s gwo');
@@ -600,6 +631,13 @@ sub run
 
         }
 
+
+        # no longer send keepalive
+        if ($config->{keep_alive_child}) {
+                kill 15, $config->{keep_alive_child};
+                sleep 2;
+                kill 9, $config->{keep_alive_child};
+        }
 
         $retval = $self->mcp_inform({state => 'end-testing'});
 
