@@ -366,7 +366,11 @@ sub control_testprogram
         $ENV{TAPPER_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
         $ENV{TAPPER_GUEST_NUMBER}    = $self->cfg->{guest_number} || 0;
         $ENV{TAPPER_SYNC_FILE}       = $self->cfg->{syncfile} if $self->cfg->{syncfile};
-
+        if ($self->{cfg}->{testplan}) {
+                $ENV{TAPPER_TESTPLAN_ID}   = $self->cfg->{testplan}{id};
+                $ENV{TAPPER_TESTPLAN_PATH} = $self->cfg->{testplan}{path};
+        }
+                
 
 
         my $test_run         = $self->cfg->{test_run};
