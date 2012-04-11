@@ -120,7 +120,7 @@ sub testprogram_execute
 
         if (not -x $program) {
                 system ("chmod", "ugo+x", $program);
-                return("tried to execute $program which is not an execuable");
+                return("tried to execute $program which is not an execuable and can not set exec flag") if not -x $program;
         }
 
         return("tried to execute $program which is a directory") if -d $program;
