@@ -12,19 +12,11 @@ use File::Basename 'basename';
 use common::sense;
 
 use Tapper::Remote::Config;
+# ABSTRACT: Control running test programs
 
 extends 'Tapper::PRC';
 
 our $MAXREAD = 1024;  # read that much in one read
-
-
-=head1 NAME
-
-Tapper::PRC::Testcontrol - Control running test programs
-
-=head1 SYNOPSIS
-
- use Tapper::PRC::Testcontrol;
 
 =head1 FUNCTIONS
 

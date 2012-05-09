@@ -54,7 +54,7 @@ if ($pid==0) {
         my $content;
 
         eval{
-                my $timeout = (3 * $ENV{TAPPER_SLEEPTIME}) || 30;
+                my $timeout = 3 * ($ENV{TAPPER_SLEEPTIME} || 10);
                 local $SIG{ALRM}=sub{die("timeout of $timeout seconds reached while waiting for test.");};
                 alarm($timeout);
                 my $msg_sock = $server->accept();

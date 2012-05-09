@@ -1,4 +1,5 @@
 package Tapper::PRC;
+# ABSTRACT: Tapper - Program run control for test program automation
 
 use strict;
 use warnings;
@@ -9,23 +10,8 @@ use Moose;
 use Log::Log4perl;
 use URI::Escape;
 
-
 extends 'Tapper::Base';
 with 'MooseX::Log::Log4perl';
-
-our $VERSION = '3.000010';
-
-=head1 NAME
-
-Tapper::PRC - Tapper - Program run control for test program automation
-
-=head1 SYNOPSIS
-
- use Tapper::PRC;
-
-=head1 FUNCTIONS
-
-=cut
 
 has cfg => (is      => 'rw',
             isa     => 'HashRef',
@@ -33,6 +19,7 @@ has cfg => (is      => 'rw',
            );
 with 'Tapper::Remote::Net';
 
+=head1 FUNCTIONS
 
 =head2 mcp_error
 
@@ -55,28 +42,3 @@ sub mcp_error
 };
 
 1;
-
-=head1 AUTHOR
-
-AMD OSRC Tapper Team, C<< <tapper at amd64.org> >>
-
-=head1 BUGS
-
-None.
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
- perldoc Tapper
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2008-2011 AMD OSRC Tapper Team, all rights reserved.
-
-This program is released under the following license: freebsd
-
