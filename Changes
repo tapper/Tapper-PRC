@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+4.0.1     2012-05-16
         - [FEAT] add testplan info to %ENV
         - [FEAT] send keep-alive messages
         - [FEAT] capture:tap - send TAP output
