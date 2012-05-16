@@ -32,7 +32,7 @@ my $cfg = {paths         => {testprog_path => getcwd().'/'} ,
            report_server => 'localhost',
            report_port   => $server->sockport
           };
-           
+
 
 
 my $testcontrol = Tapper::PRC::Testcontrol->new(cfg => $cfg);
