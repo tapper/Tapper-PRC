@@ -74,8 +74,8 @@ is($retval, 0, 'Mocking testprogram_execute');
 $retval = $testcontrol->control_testprogram();
 is($retval, 0, 'Running control_testprogram');
 cmp_deeply( shift @execute_options, superhashof({program    => '/bin/true',
-                                              timeout    => 129600, 
-                                              out_dir    => "$output_dir/1234/test/", 
+                                              timeout    => 129600,
+                                              out_dir    => "$output_dir/1234/test/",
                                               parameters => ['--tests','-v'],
                                               runtime    => 72000}),
            'Calling testprogram_execute');

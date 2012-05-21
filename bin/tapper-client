@@ -1,4 +1,6 @@
-#! perl
+#! /usr/bin/perl
+# PODNAME: tapper-client
+# ABSTRACT: cmdline frontend to Testcontrol.ssh
 
 use strict;
 use warnings;

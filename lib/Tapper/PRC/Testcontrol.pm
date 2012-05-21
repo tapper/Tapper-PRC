@@ -12,19 +12,11 @@ use File::Basename 'basename';
 use common::sense;
 
 use Tapper::Remote::Config;
+# ABSTRACT: Control running test programs
 
 extends 'Tapper::PRC';
 
 our $MAXREAD = 1024;  # read that much in one read
-
-
-=head1 NAME
-
-Tapper::PRC::Testcontrol - Control running test programs
-
-=head1 SYNOPSIS
-
- use Tapper::PRC::Testcontrol;
 
 =head1 FUNCTIONS
 
@@ -336,7 +328,7 @@ sub nfs_mount
         return $error if $error;
 
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{paths}{prc_nfs_mountdir});
-	return 0 if not $error;
+        return 0 if not $error;
         ($error, $retval) = $self->log_and_exec("mount",$self->cfg->{prc_nfs_server}.":".$self->cfg->{paths}{prc_nfs_mountdir},$self->cfg->{paths}{prc_nfs_mountdir});
         # report error, but only if not already mounted
         return "Can't mount ".$self->cfg->{paths}{prc_nfs_mountdir}.":$retval" if ($error and ! -d $self->cfg->{paths}{prc_nfs_mountdir}."/live");
@@ -370,7 +362,7 @@ sub control_testprogram
                 $ENV{TAPPER_TESTPLAN_ID}   = $self->cfg->{testplan}{id};
                 $ENV{TAPPER_TESTPLAN_PATH} = $self->cfg->{testplan}{path};
         }
-                
+
 
 
         my $test_run         = $self->cfg->{test_run};
@@ -653,28 +645,3 @@ sub run
 }
 
 1;
-
-=head1 AUTHOR
-
-AMD OSRC Tapper Team, C<< <tapper at amd64.org> >>
-
-=head1 BUGS
-
-None.
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
- perldoc Tapper
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2008-2011 AMD OSRC Tapper Team, all rights reserved.
-
-This program is released under the following license: freebsd
-

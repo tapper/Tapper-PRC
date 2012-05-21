@@ -55,7 +55,7 @@ if ($pid==0) {
 
 } else {
         $server = IO::Socket::INET->new(Listen    => 5,
-                                        LocalPort => 13377); # needs to be hard coded because config comed from 
+                                        LocalPort => 13377); # needs to be hard coded because config comed from
                                                              # local file in t/files/
         ok($server, 'create socket');
         eval{

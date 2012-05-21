@@ -1,4 +1,6 @@
-#! perl
+#! /usr/bin/perl
+# PODNAME: tapper-automatic-test.pl
+# ABSTRACT: cmdline frontend to Testcontrol.autoinstall
 
 use strict;
 use warnings;
