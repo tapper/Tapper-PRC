@@ -585,6 +585,10 @@ sub run
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
+        if ($self->cfg->{log_to_file}) {
+                $self->log_to_file('testing');
+        }
+
         if ($config->{times}{keep_alive_timeout}) {
                 $SIG{CHLD} = 'IGNORE';
                 my $pid = fork();
