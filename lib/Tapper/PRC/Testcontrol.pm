@@ -154,7 +154,12 @@ sub testprogram_execute
                 close $write;
                 my $killed;
                 # (XXX) better create a process group an kill this
-                local $SIG{ALRM}=sub{$killed=1;kill (15,$pid); kill (9,$pid);};
+                local $SIG{ALRM}=sub {
+                                      $killed = 1;
+                                      kill (15, $pid);
+                                      sleep ($ENV{HARNESS_ACTIVE} ? 1 : 60); # give SIG handlers some time (but not during test)
+                                      kill (9, $pid) if kill 0, $pid;
+                                     };
                 alarm ($test_program->{timeout});
                 waitpid($pid,0);
                 my $retval = $?;
