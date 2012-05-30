@@ -67,7 +67,9 @@ sub send_output
         $headerlines .= "# Tapper-machine-name: ".$self->cfg->{hostname}."\n"          unless $captured_output =~ /\# Tapper-machine-name:/;
         $headerlines .= "# Tapper-reportgroup-testrun: ".$self->cfg->{test_run}."\n"   unless $captured_output =~ /\# Tapper-reportgroup-testrun:/;
 
-        my ($error, $message) = $self->tap_report_away($headerlines.$captured_output);
+        $captured_output =~ s/^(1\.\.\d+\n)/$1$headerlines/m;
+
+        my ($error, $message) = $self->tap_report_away($captured_output);
         return $message if $error;
         return 0;
 
