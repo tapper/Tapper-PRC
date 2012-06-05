@@ -1,6 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - give SIG handlers some time between SIGKILL and SIGTERM
+        - [TEST] for sending TAP uses separate testprogram now
+        - [TEST] inline headers for TAP sending
+        - [FIX] have header inline for TAP sending
 
 4.0.1     2012-05-16
         - [FEAT] add testplan info to %ENV
