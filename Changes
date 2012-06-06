@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+4.0.2     2012-06-05
         - give SIG handlers some time between SIGKILL and SIGTERM
         - [TEST] for sending TAP uses separate testprogram now
         - [TEST] inline headers for TAP sending
