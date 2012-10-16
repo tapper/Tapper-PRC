@@ -1,5 +1,9 @@
 package Tapper::PRC::Testcontrol;
 
+use 5.010;
+use warnings;
+use strict;
+
 use IPC::Open3;
 use File::Copy;
 use File::Temp qw/tempdir/;
@@ -9,8 +13,6 @@ use File::Basename 'dirname';
 use English '-no_match_vars';
 use IO::Handle;
 use File::Basename 'basename';
-use common::sense;
-use 5.010;
 
 use Tapper::Remote::Config;
 # ABSTRACT: Control running test programs
