@@ -10,6 +10,7 @@ use English '-no_match_vars';
 use IO::Handle;
 use File::Basename 'basename';
 use common::sense;
+use 5.010;
 
 use Tapper::Remote::Config;
 # ABSTRACT: Control running test programs
@@ -365,6 +366,7 @@ sub control_testprogram
         $ENV{TAPPER_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
         $ENV{TAPPER_GUEST_NUMBER}    = $self->cfg->{guest_number} || 0;
         $ENV{TAPPER_SYNC_FILE}       = $self->cfg->{syncfile} if $self->cfg->{syncfile};
+        $ENV{CRITICALITY}            = $self->cfg->{criticality} //  4;  # provide criticality for autoreport test scripts (4 == max)
         if ($self->{cfg}->{testplan}) {
                 $ENV{TAPPER_TESTPLAN_ID}   = $self->cfg->{testplan}{id};
                 $ENV{TAPPER_TESTPLAN_PATH} = $self->cfg->{testplan}{path};
