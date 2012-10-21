@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - sync with release version
 
 4.0.2     2012-06-05
         - give SIG handlers some time between SIGKILL and SIGTERM
