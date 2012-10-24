@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+4.1.0     2012-10-21
+        - sync with release version
+
 4.0.2     2012-06-05
         - give SIG handlers some time between SIGKILL and SIGTERM
         - [TEST] for sending TAP uses separate testprogram now
