@@ -19,6 +19,11 @@ has cfg => (is      => 'rw',
            );
 with 'Tapper::Remote::Net';
 
+=head1 DESCRIPTION
+
+This distribution implements a program run control for test program
+automation. It is part of the Tapper distribution.
+
 =head1 FUNCTIONS
 
 =head2 mcp_error
