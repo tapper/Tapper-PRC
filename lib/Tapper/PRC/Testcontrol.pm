@@ -140,8 +140,8 @@ sub testprogram_execute
         if ($pid == 0) {        # hello child
                 close $read;
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
-                open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
-                open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                open (STDOUT, ">", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
+                open (STDERR, ">", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
                 if ($chdir) {
                         if (-d $chdir) {
                                 chdir $chdir;
