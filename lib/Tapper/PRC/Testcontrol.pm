@@ -164,6 +164,7 @@ sub testprogram_execute
                                       # allow testprogram to react on SIGTERM
                                       my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
                                       while ($grace_period and (kill 0, $pid)) {
+                                              waitpid($pid,0);
                                               sleep 1;
                                               $grace_period--;
                                       }
