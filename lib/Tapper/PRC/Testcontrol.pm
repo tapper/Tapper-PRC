@@ -160,8 +160,14 @@ sub testprogram_execute
                 local $SIG{ALRM}=sub {
                                       $killed = 1;
                                       kill (15, $pid);
-                                      sleep ($ENV{HARNESS_ACTIVE} ? 1 : 60); # give SIG handlers some time (but not during test)
-                                      kill (9, $pid) if kill 0, $pid;
+                                      
+                                      # allow testprogram to react on SIGTERM
+                                      my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
+                                      while ($grace_period and (kill 0, $pid)) {
+                                              sleep 1;
+                                              $grace_period--;
+                                      }
+                                      kill (9, $pid);
                                      };
                 alarm ($test_program->{timeout});
                 waitpid($pid,0);
