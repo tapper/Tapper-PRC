@@ -170,7 +170,7 @@ sub testprogram_execute
                                       }
                                       kill (9, $pid);
                                      };
-                alarm ($test_program->{timeout});
+                alarm ($test_program->{timeout} || 0);
                 waitpid($pid,0);
                 my $retval = $?;
                 alarm(0);
