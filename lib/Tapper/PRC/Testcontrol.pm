@@ -656,7 +656,7 @@ sub run
                 sleep 2;
                 kill 9, $config->{keep_alive_child};
         }
-
+        sleep 1; # make sure last end-testing can't overtake last end-testprogram (Yes, this did happen)
         $retval = $self->mcp_inform({state => 'end-testing'});
 
 
