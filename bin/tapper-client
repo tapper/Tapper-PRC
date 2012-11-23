@@ -18,16 +18,15 @@ if (@ARGV and $ARGV[0] eq "stop") {
 
 my $pid = fork();
 if ($pid == 0) {
-        close STDIN;
-        close STDOUT;
-        close STDERR;
+        open (STDOUT, ">", "/tmp/tapper-client.stdout") or die "Can't open output file /tmp/tapper-client.stdout: $!";
+        open (STDERR, ">", "/tmp/tapper-client.stderr") or die "Can't open output file /tmp/tapper-client.stderr: $!";
 
         # bearable since it never really changes
         my $logconf = 'log4perl.rootlogger = DEBUG, root
 log4perl.appender.root             = Log::Log4perl::Appender::File
 log4perl.appender.root.layout      = PatternLayout
 log4Perl.appender.root.mode        = clobber
-log4Perl.appender.root.filename    = /tmp/tapper-client.output
+log4Perl.appender.root.filename    = /tmp/tapper-client.log
 # date package category - message in  last 2 components of filename (linenumber) newline
 log4perl.appender.Screen.layout.ConversionPattern = %d %p %c - %m in %F{2} (%L)%n';
         Log::Log4perl::init(\$logconf);
