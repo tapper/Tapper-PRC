@@ -9,7 +9,6 @@ use Sys::Hostname;
 use Tapper::PRC::Testcontrol;
 use Tapper::Installer::Base;
 
-
 # when we run from /etc/init.d tapper might be called at shutdown again
 # make sure it's not executed at this point
 if (@ARGV and $ARGV[0] eq "stop") {
