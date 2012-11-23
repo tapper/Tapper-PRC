@@ -160,7 +160,7 @@ sub testprogram_execute
                 local $SIG{ALRM}=sub {
                                       $killed = 1;
                                       kill (15, $pid);
-                                      
+
                                       # allow testprogram to react on SIGTERM
                                       my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
                                       while ($grace_period and (kill 0, $pid)) {
