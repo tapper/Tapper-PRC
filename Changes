@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+4.1.2     2012-11-23
         - self-made daemonize for better support of
           tapper-client for local test
 
