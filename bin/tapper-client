@@ -30,7 +30,7 @@ log4Perl.appender.root.filename    = /tmp/tapper-client.log
 # date package category - message in  last 2 components of filename (linenumber) newline
 log4perl.appender.Screen.layout.ConversionPattern = %d %p %c - %m in %F{2} (%L)%n';
         Log::Log4perl::init(\$logconf);
-
+#        no warnings 'uninitialized';
         if ($ENV{TAPPER_TEST_TYPE} eq 'ssh') {
                 my $client = Tapper::Installer::Base->new;
                 $client->system_install("ssh");
