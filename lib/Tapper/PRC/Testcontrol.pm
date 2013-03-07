@@ -139,9 +139,20 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
+                my $stdout = "$output.stdout";
+                my $stderr = "$output.stderr";
+                my $file_counter = '';
+
+                while (-e $stdout.$file_counter or -e $stderr.$file_counter) {
+                        no warnings 'numeric';
+                        $file_counter++;
+                }
+                $stdout.=$file_counter;
+                $stderr.=$file_counter;
+
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
-                open (STDOUT, ">", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
-                open (STDERR, ">", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                open (STDOUT, ">", "$stdout") or syswrite($write, "Can't open output file $stdout: $!"),exit 1;
+                open (STDERR, ">", "$stderr") or syswrite($write, "Can't open output file $stderr: $!"),exit 1;
                 if ($chdir) {
                         if (-d $chdir) {
                                 chdir $chdir;
