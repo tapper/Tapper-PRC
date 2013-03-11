@@ -12,7 +12,7 @@ use YAML 'LoadFile';
 use File::Basename 'dirname';
 use English '-no_match_vars';
 use IO::Handle;
-use File::Basename 'basename';
+use File::Basename qw/basename dirname/;
 
 use Tapper::Remote::Config;
 # ABSTRACT: Control running test programs
@@ -79,6 +79,35 @@ sub send_output
 }
 
 
+=head2 get_appendix
+
+For testprogram with the same name the output file names will be
+identical. To prevent this, we append a serial number. This function
+calculates this appendix and returns the next one to use. If no such
+serial is needed because no output file of the given name exists yet the
+empty string is returned.
+
+@param string  - name of the output file without appendix
+
+@return string - string to append to output file name to make it unique
+
+=cut
+
+sub get_appendix {
+        my($self, $output)  = @_;
+        my $appendix = '';
+        if (-e "$output.stdout" or -e "$output.stdout") {
+                my $basename = basename($output);
+                my $dirname  = dirname ($output);
+                my @files  = <$dirname/$basename-*.stdout>;
+
+                no warnings 'uninitialized';
+                my @appendizes = sort map { my ($append) = m/(\d+)\D*$/; $append} @files;
+                $appendix = sprintf("-%03d",shift(@appendizes) + 1);
+        }
+        return $appendix;
+}
+
 =head2 testprogram_execute
 
 Execute one testprogram. Handle all error conditions.
@@ -139,20 +168,12 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
-                my $stdout = "$output.stdout";
-                my $stderr = "$output.stderr";
-                my $file_counter = '';
+                my $appendix = $self->get_appendix($output);
 
-                while (-e $stdout.$file_counter or -e $stderr.$file_counter) {
-                        no warnings 'numeric';
-                        $file_counter++;
-                }
-                $stdout.=$file_counter;
-                $stderr.=$file_counter;
 
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
-                open (STDOUT, ">", "$stdout") or syswrite($write, "Can't open output file $stdout: $!"),exit 1;
-                open (STDERR, ">", "$stderr") or syswrite($write, "Can't open output file $stderr: $!"),exit 1;
+                open (STDOUT, ">", "$output$appendix.stdout") or syswrite($write, "Can't open output file $output$appendix.stdout: $!"),exit 1;
+                open (STDERR, ">", "$output$appendix.stderr") or syswrite($write, "Can't open output file $output$appendix.stderr: $!"),exit 1;
                 if ($chdir) {
                         if (-d $chdir) {
                                 chdir $chdir;
