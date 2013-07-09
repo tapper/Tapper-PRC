@@ -70,7 +70,7 @@ if ($pid==0) {
         my @content;
         eval{
                 $SIG{ALRM}=sub{die("timeout\n");};
-                alarm(10);
+                alarm(15);
 
         MESSAGE:
                 while (1) {
