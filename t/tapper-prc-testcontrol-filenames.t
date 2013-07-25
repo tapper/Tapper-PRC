@@ -46,4 +46,4 @@ $prc->testprogram_execute( {program => 'sleep.sh',
                             argv => [ 0 ],
                            }
                          );
-ok(-e "$tempdir/sleep_sh-001.stdout", 'Output file with appendix');
+ok(-e "$tempdir/sleep_sh-001.stdout", 'Output file with appendix exists');
