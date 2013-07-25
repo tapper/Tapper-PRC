@@ -137,20 +137,20 @@ sub testprogram_execute
         $output      =  $test_program->{out_dir}.$output;
 
 
-        # make relative paths absolute
-        $program=$progpath.$program if $program !~ m(^/);
-
-        # try to catch non executables early
-        return("tried to execute $program which does not exist") unless -e $program;
-
-
-        if (not -x $program) {
-                system ("chmod", "ugo+x", $program);
-                return("tried to execute $program which is not an execuable and can not set exec flag") if not -x $program;
+        if ($program !~ m(^/)) {
+                $ENV{PATH} = "$progpath:$ENV{PATH}";
         }
 
-        return("tried to execute $program which is a directory") if -d $program;
-        return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
+        # try to catch non executables early
+        if (-e $program) {
+                if (not -x $program) {
+                        system ("chmod", "ugo+x", $program);
+                        return("tried to execute $program which is not an execuable and can not set exec flag") if not -x $program;
+                }
+
+                return("tried to execute $program which is a directory") if -d $program;
+                return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
+        }
 
         foreach my $file (@{$test_program->{upload_before} || [] }) {
                 my $target_name =~ s|[^A-Za-z0-9_-]|_|g;
@@ -216,6 +216,7 @@ sub testprogram_execute
                         my $captured_output;
                         given($test_program->{capture}) {
                                 when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output.stdout")}; return $@ if $@;};
+                                when ('tap-stderr') { eval { $captured_output = $self->capture_handler_tap("$output.stderr")}; return $@ if $@;};
                                 default      { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"};
                         }
                         my $error_msg =  $self->send_output($captured_output, $test_program);
