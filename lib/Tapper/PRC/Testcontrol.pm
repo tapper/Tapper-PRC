@@ -654,10 +654,12 @@ sub run
 
         if ($config->{scenario_id}) {
                 my $syncfile = $config->{paths}{sync_path}."/".$config->{scenario_id}."/syncfile";
-                $self->cfg->{syncfile} = $syncfile;
+                if (-e $syncfile) {
+                        $self->cfg->{syncfile} = $syncfile;
 
-                $retval = $self->wait_for_sync($syncfile);
-                $self->log->logdie("Can not sync - $retval") if $retval;
+                        $retval = $self->wait_for_sync($syncfile);
+                        $self->log->logdie("Can not sync - $retval") if $retval;
+                }
         }
 
         if ($self->{cfg}->{guest_count}) {
