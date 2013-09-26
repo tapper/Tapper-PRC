@@ -139,6 +139,8 @@ sub testprogram_execute
 
         if ($program !~ m(^/)) {
                 $ENV{PATH} = "$progpath:$ENV{PATH}";
+                $program = qx(which $program);
+                chomp $program;
         }
 
         # try to catch non executables early
