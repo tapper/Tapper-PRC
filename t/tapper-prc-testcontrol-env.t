@@ -90,7 +90,7 @@ ok(-e "$output_dir/1234/test/env.stdout", 'Test output file exists');
 my ($sync_path_in_env);
 open my $fh, '<', "$output_dir/1234/test/env.stdout" or die "Can not open optput file $output_dir/1234/test/env.stdout: $!";
 while (my $line = <$fh>) {
-        if ($line =~ /TAPPER_SYNC_PATH=(.+)/) {
+        if ($line =~ /^TAPPER_SYNC_PATH=(.+)/) {
                 $sync_path_in_env = $1;
         }
 };
