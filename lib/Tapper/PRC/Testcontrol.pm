@@ -162,6 +162,7 @@ sub testprogram_execute
 
         $self->log->info("Try to execute test suite $program");
 
+        my $appendix = $self->get_appendix($output);
         pipe (my $read, my $write);
         return ("Can't open pipe:$!") if not (defined $read and defined $write);
 
@@ -170,7 +171,6 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
-                my $appendix = $self->get_appendix($output);
 
 
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
@@ -217,8 +217,8 @@ sub testprogram_execute
                 if ($test_program->{capture}) {
                         my $captured_output;
                         given($test_program->{capture}) {
-                                when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output.stdout")}; return $@ if $@;};
-                                when ('tap-stderr') { eval { $captured_output = $self->capture_handler_tap("$output.stderr")}; return $@ if $@;};
+                                when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stdout")}; return $@ if $@;};
+                                when ('tap-stderr') { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stderr")}; return $@ if $@;};
                                 default      { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"};
                         }
                         my $error_msg =  $self->send_output($captured_output, $test_program);
