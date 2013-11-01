@@ -96,7 +96,7 @@ empty string is returned.
 sub get_appendix {
         my($self, $output)  = @_;
         my $appendix = '';
-        if (-e "$output.stdout" or -e "$output.stdout") {
+        if (-e "$output.stdout" or -e "$output.stderr") {
                 my $basename = basename($output);
                 my $dirname  = dirname ($output);
                 my @files  = <$dirname/$basename-*.stdout>;
