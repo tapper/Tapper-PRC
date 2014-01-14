@@ -179,7 +179,7 @@ sub testprogram_execute
                 if ($chdir) {
                         if (-d $chdir) {
                                 chdir $chdir;
-                        } elsif ($chdir ne "AUTO" and $program =~ m,^/, ) {
+                        } elsif ($chdir eq "AUTO" and $program =~ m,^/, ) {
                                 chdir dirname($program);
                         }
                 }
