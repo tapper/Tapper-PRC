@@ -194,13 +194,14 @@ sub testprogram_execute
                 local $SIG{ALRM}=sub {
                                       $killed = 1;
                                       kill (15, $pid);
+                                      my $wait_for_cleanup_started = time;
 
                                       # allow testprogram to react on SIGTERM
                                       my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
-                                      while ($grace_period and (kill 0, $pid)) {
+                                      while (time - $wait_for_cleanup_started < $grace_period
+                                             and (kill 0, $pid)) {
                                               waitpid($pid,0);
                                               sleep 1;
-                                              $grace_period--;
                                       }
                                       kill (9, $pid);
                                      };
