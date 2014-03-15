@@ -12,7 +12,7 @@ use YAML 'LoadFile';
 use File::Basename 'dirname';
 use English '-no_match_vars';
 use IO::Handle;
-use File::Basename 'basename';
+use File::Basename qw/basename dirname/;
 
 use Tapper::Remote::Config;
 # ABSTRACT: Control running test programs
@@ -79,6 +79,35 @@ sub send_output
 }
 
 
+=head2 get_appendix
+
+For testprogram with the same name the output file names will be
+identical. To prevent this, we append a serial number. This function
+calculates this appendix and returns the next one to use. If no such
+serial is needed because no output file of the given name exists yet the
+empty string is returned.
+
+@param string  - name of the output file without appendix
+
+@return string - string to append to output file name to make it unique
+
+=cut
+
+sub get_appendix {
+        my($self, $output)  = @_;
+        my $appendix = '';
+        if (-e "$output.stdout" or -e "$output.stderr") {
+                my $basename = basename($output);
+                my $dirname  = dirname ($output);
+                my @files  = <$dirname/$basename-*.stdout>;
+
+                no warnings 'uninitialized';
+                my @appendizes = sort map { my ($append) = m/(\d+)\D*$/; $append} @files;
+                $appendix = sprintf("-%03d",shift(@appendizes) + 1);
+        }
+        return $appendix;
+}
+
 =head2 testprogram_execute
 
 Execute one testprogram. Handle all error conditions.
@@ -108,20 +137,22 @@ sub testprogram_execute
         $output      =  $test_program->{out_dir}.$output;
 
 
-        # make relative paths absolute
-        $program=$progpath.$program if $program !~ m(^/);
-
-        # try to catch non executables early
-        return("tried to execute $program which does not exist") unless -e $program;
-
-
-        if (not -x $program) {
-                system ("chmod", "ugo+x", $program);
-                return("tried to execute $program which is not an execuable and can not set exec flag") if not -x $program;
+        if ($program !~ m(^/)) {
+                $ENV{PATH} = "$progpath:$ENV{PATH}";
+                $program = qx(which $program);
+                chomp $program;
         }
 
-        return("tried to execute $program which is a directory") if -d $program;
-        return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
+        # try to catch non executables early
+        if (-e $program) {
+                if (not -x $program) {
+                        system ("chmod", "ugo+x", $program);
+                        return("tried to execute $program which is not an execuable and can not set exec flag") if not -x $program;
+                }
+
+                return("tried to execute $program which is a directory") if -d $program;
+                return("tried to execute $program which is a special file (FIFO, socket, device, ..)") unless -f $program or -l $program;
+        }
 
         foreach my $file (@{$test_program->{upload_before} || [] }) {
                 my $target_name =~ s|[^A-Za-z0-9_-]|_|g;
@@ -131,6 +162,7 @@ sub testprogram_execute
 
         $self->log->info("Try to execute test suite $program");
 
+        my $appendix = $self->get_appendix($output);
         pipe (my $read, my $write);
         return ("Can't open pipe:$!") if not (defined $read and defined $write);
 
@@ -139,13 +171,15 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
+
+
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
-                open (STDOUT, ">", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
-                open (STDERR, ">", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                open (STDOUT, ">", "$output$appendix.stdout") or syswrite($write, "Can't open output file $output$appendix.stdout: $!"),exit 1;
+                open (STDERR, ">", "$output$appendix.stderr") or syswrite($write, "Can't open output file $output$appendix.stderr: $!"),exit 1;
                 if ($chdir) {
                         if (-d $chdir) {
                                 chdir $chdir;
-                        } elsif ($chdir == "AUTO" and $program =~ m,^/, ) {
+                        } elsif ($chdir eq "AUTO" and $program =~ m,^/, ) {
                                 chdir dirname($program);
                         }
                 }
@@ -183,7 +217,8 @@ sub testprogram_execute
                 if ($test_program->{capture}) {
                         my $captured_output;
                         given($test_program->{capture}) {
-                                when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output.stdout")}; return $@ if $@;};
+                                when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stdout")}; return $@ if $@;};
+                                when ('tap-stderr') { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stderr")}; return $@ if $@;};
                                 default      { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"};
                         }
                         my $error_msg =  $self->send_output($captured_output, $test_program);
@@ -375,6 +410,7 @@ sub control_testprogram
         $ENV{TAPPER_MAX_REBOOT}      = $self->cfg->{max_reboot} if $self->cfg->{max_reboot};
         $ENV{TAPPER_GUEST_NUMBER}    = $self->cfg->{guest_number} || 0;
         $ENV{TAPPER_SYNC_FILE}       = $self->cfg->{syncfile} if $self->cfg->{syncfile};
+        $ENV{TAPPER_SYNC_PATH}       = $self->cfg->{paths}{sync_path} if -d ($self->cfg->{paths}{sync_path} || '');
         if ($self->{cfg}->{testplan}) {
                 $ENV{TAPPER_TESTPLAN_ID}   = $self->cfg->{testplan}{id};
                 $ENV{TAPPER_TESTPLAN_PATH} = $self->cfg->{testplan}{path};
@@ -621,10 +657,12 @@ sub run
 
         if ($config->{scenario_id}) {
                 my $syncfile = $config->{paths}{sync_path}."/".$config->{scenario_id}."/syncfile";
-                $self->cfg->{syncfile} = $syncfile;
+                if (-e $syncfile) {
+                        $self->cfg->{syncfile} = $syncfile;
 
-                $retval = $self->wait_for_sync($syncfile);
-                $self->log->logdie("Can not sync - $retval") if $retval;
+                        $retval = $self->wait_for_sync($syncfile);
+                        $self->log->logdie("Can not sync - $retval") if $retval;
+                }
         }
 
         if ($self->{cfg}->{guest_count}) {

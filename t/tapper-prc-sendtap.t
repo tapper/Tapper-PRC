@@ -23,6 +23,7 @@ Log::Log4perl->init(\$string);
 BEGIN { use_ok('Tapper::PRC::Testcontrol'); }
 
 my $tempdir = tempdir( CLEANUP => 1 );
+$ENV{TAPPER_OUTPUT_PATH} = $tempdir;
 my $server = IO::Socket::INET->new(Listen    => 5);
 ok($server, 'create socket');
 
@@ -73,7 +74,44 @@ if ($pid==0) {
 # Tapper-machine-name: testhost
 # Tapper-reportgroup-testrun: 735710
 expected text
+ok - No file appendix. May be the first iteration
 ', 'Upload TAP on behalf of testsuite (option capture => "tap")');
 }
+
+$pid=fork();
+if ($pid==0) {
+        close $server;
+        diag "Sleep a bit to prevent timout race conditions...";
+        sleep($ENV{TAPPER_SLEEPTIME} || 10);
+        $testcontrol->testprogram_execute($program);
+        exit 0;
+
+} else {
+        my $content;
+
+        eval{
+                my $timeout = 3 * ($ENV{TAPPER_SLEEPTIME} || 10);
+                local $SIG{ALRM}=sub{die("timeout of $timeout seconds reached while waiting for test.");};
+                alarm($timeout);
+                my $msg_sock = $server->accept();
+                print $msg_sock "Your report_id is 8888\n";
+                while (my $line=<$msg_sock>) {
+                        $content.=$line;
+                }
+                alarm(0);
+        };
+        is($@, '', 'Get state messages in time');
+
+        waitpid($pid,0);
+
+        is($content, '1..2
+# Tapper-suite-name: ripley
+# Tapper-machine-name: testhost
+# Tapper-reportgroup-testrun: 735710
+expected text
+ok - If we find this, capturing works with outfile name appendices
+', 'Upload TAP on behalf of testsuite (option capture => "tap")');
+}
+
 
 done_testing;

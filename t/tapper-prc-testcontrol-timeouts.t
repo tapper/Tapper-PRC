@@ -39,7 +39,7 @@ my $config = {
               max_reboot => 0,
               guest_number => 0,
               syncfile => '/dev/null', # just to check if set correctly in ENV
-              paths => {output_dir => $output_dir},
+              paths => {output_dir => $output_dir, testprog_path => '.'},
               testprogram_list => [{
                                     program => 't/files/exec/sleep.sh',
                                     runtime => 2,
@@ -70,7 +70,7 @@ if ($pid==0) {
         my @content;
         eval{
                 $SIG{ALRM}=sub{die("timeout\n");};
-                alarm(10);
+                alarm(15);
 
         MESSAGE:
                 while (1) {
