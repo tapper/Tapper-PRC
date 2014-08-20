@@ -48,7 +48,6 @@ sub capture_handler_tap
         return $content;
 }
 
-
 =head2 send_output
 
 Send the captured TAP output to the report receiver.
@@ -73,11 +72,98 @@ sub send_output
         $captured_output =~ s/^(1\.\.\d+\n)/$1$headerlines/m;
 
         my ($error, $message) = $self->tap_report_away($captured_output);
+
         return $message if $error;
         return 0;
 
 }
 
+=head2 send_output
+
+Send the a attachment to the report receiver and add attachements.
+
+@return success - 0
+@return error   - error string
+
+=cut
+
+sub send_attachements {
+
+    my ( $self ) = @_;
+
+    my ( $b_error, $s_message ) = $self->tap_report_away(
+          "TAP version 13\n"
+        . "1..1\n"
+        . "# Tapper-suite-name: PRC" . ( $self->cfg->{guest_number} || 0 ) . "-Overview\n"
+        . "# Tapper-machine-name: " . $self->cfg->{hostname} . "\n"
+        . "# Tapper-reportgroup-testrun: " . $self->cfg->{test_run} . "\n"
+        . "ok - Test attachments\n"
+    );
+
+    return ( 1, $s_message ) if $b_error;
+
+    $self->upload_files( $s_message );
+
+    return ( 0, q## );
+
+}
+
+=head2 upload_files
+
+Upload files written in one stage of the testrun to report framework.
+
+@param int - report id
+@param int - testrun id
+
+@return success - 0
+@return error   - error string
+
+=cut
+
+sub upload_files
+{
+
+    my ( $or_self, $i_reportid ) = @_;
+
+    my $s_host = $or_self->cfg->{report_server};
+    my $i_port = $or_self->cfg->{report_api_port};
+    my $s_path = $ENV{TAPPER_OUTPUT_PATH};
+
+    return 0 unless -d $s_path;
+
+    my @a_files = `find $s_path -type f`;
+
+    $or_self->log->debug( @a_files );
+
+    foreach my $s_file( @a_files ) {
+
+        chomp $s_file;
+
+        my $s_reportfile =  $s_file;
+           $s_reportfile =~ s|^$s_path||;
+           $s_reportfile =~ s|^./||;
+           $s_reportfile =~ s|[^A-Za-z0-9_-]|_|g;
+
+        my $or_server = IO::Socket::INET->new(
+            PeerAddr => $s_host,
+            PeerPort => $i_port,
+        );
+
+        return "Cannot open remote receiver $s_host:$i_port" if not $or_server;
+
+        open( my $fh_file, "<", $s_file ) or do{$or_self->log->warn("Can't open $s_file:$!"); $or_server->close();next;};
+        $or_server->print("#! upload $i_reportid $s_reportfile plain\n");
+        while ( my $line = <$fh_file> ) {
+                $or_server->print($line);
+        }
+        close($fh_file);
+        $or_server->close();
+
+    }
+
+    return 0;
+
+}
 
 =head2 get_appendix
 
@@ -129,12 +215,12 @@ sub testprogram_execute
 {
         my ($self, $test_program) = @_;
 
-        my $program  = $test_program->{program};
-        my $chdir    = $test_program->{chdir};
+        my $program  =  $test_program->{program};
+        my $chdir    =  $test_program->{chdir};
         my $progpath =  $self->cfg->{paths}{testprog_path};
         my $output   =  $program;
-        $output      =~ s|[^A-Za-z0-9_-]|_|g;
-        $output      =  $test_program->{out_dir}.$output;
+           $output   =~ s|[^A-Za-z0-9_-]|_|g;
+           $output   =  $test_program->{out_dir}.$output;
 
 
         if ($program !~ m(^/)) {
@@ -155,9 +241,11 @@ sub testprogram_execute
         }
 
         foreach my $file (@{$test_program->{upload_before} || [] }) {
+
                 my $target_name =~ s|[^A-Za-z0-9_-]|_|g;
-                $target_name = $test_program->{out_dir}.'/before/'.$target_name;
+                   $target_name = $test_program->{out_dir}.'/before/'.$target_name;
                 File::Copy::copy($file, $target_name);
+
         }
 
         $self->log->info("Try to execute test suite $program");
@@ -171,7 +259,6 @@ sub testprogram_execute
 
         if ($pid == 0) {        # hello child
                 close $read;
-
 
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
                 open (STDOUT, ">", "$output$appendix.stdout") or syswrite($write, "Can't open output file $output$appendix.stdout: $!"),exit 1;
@@ -218,13 +305,17 @@ sub testprogram_execute
                 if ($test_program->{capture}) {
                         my $captured_output;
                         given($test_program->{capture}) {
-                                when ('tap') { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stdout")}; return $@ if $@;};
-                                when ('tap-stderr') { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stderr")}; return $@ if $@;};
-                                default      { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"};
+                                when ( 'tap'        ) { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stdout")}; return $@ if $@;               };
+                                when ( 'tap-stderr' ) { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stderr")}; return $@ if $@;               };
+                                default               { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"; };
                         }
-                        my $error_msg =  $self->send_output($captured_output, $test_program);
-                        return $error_msg if $error_msg;
+                        my ( $b_error, $error_msg ) =  $self->send_output($captured_output, $test_program);
+                        return $error_msg if $b_error;
                 }
+
+                # send attachment report
+                my ( $b_error, $s_error_msg ) = $self->send_attachements();
+                return $s_error_msg if $b_error;
 
                 return "Killed $program after $test_program->{timeout} seconds" if $killed;
                 if ( $retval ) {
@@ -235,7 +326,6 @@ sub testprogram_execute
         }
         return 0;
 }
-
 
 =head2 guest_start
 
@@ -334,7 +424,7 @@ not. Existing files of wrong type are deleted.
 @retval error   - error string
 
 =cut
-
+        
 sub create_log
 {
         my ($self) = @_;
@@ -359,8 +449,6 @@ sub create_log
         }
         return 0;
 }
-
-
 
 =head2 nfs_mount
 
@@ -401,6 +489,7 @@ the environment variables some testers asked for.
 sub control_testprogram
 {
         my ($self) = @_;
+
         $ENV{TAPPER_TESTRUN}         = $self->cfg->{test_run};
         $ENV{TAPPER_SERVER}          = $self->cfg->{mcp_server};
         $ENV{TAPPER_REPORT_SERVER}   = $self->cfg->{report_server};
@@ -417,17 +506,13 @@ sub control_testprogram
                 $ENV{TAPPER_TESTPLAN_PATH} = $self->cfg->{testplan}{path};
         }
 
-
-
         my $test_run         = $self->cfg->{test_run};
         my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
         my @testprogram_list;
-        @testprogram_list    = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
-
+           @testprogram_list = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
 
         # prepend outdir with guest number if we are in virtualisation guest
         $out_dir.="guest-".$self->{cfg}->{guest_number}."/" if $self->{cfg}->{guest_number};
-
 
         my $error = $self->makedir($out_dir);
 
@@ -437,7 +522,7 @@ sub control_testprogram
                 $out_dir = tempdir( CLEANUP => 1 );
         }
 
-        $ENV{TAPPER_OUTPUT_PATH}=$out_dir;
+        $ENV{TAPPER_OUTPUT_PATH} = $out_dir;
 
         if ($self->cfg->{test_program}) {
                 my $argv;
@@ -491,7 +576,6 @@ sub control_testprogram
         return(0);
 }
 
-
 =head2 get_peers_from_file
 
 Read syncfile and extract list of peer hosts (not including this host).
@@ -532,7 +616,6 @@ Synchronise with other hosts belonging to the same interdependent testrun.
 @return error   - error string
 
 =cut
-
 
 sub wait_for_sync
 {
