@@ -94,7 +94,7 @@ sub send_attachements {
     my ( $b_error, $s_message ) = $self->tap_report_away(
           "TAP version 13\n"
         . "1..1\n"
-        . "# Tapper-suite-name: PRC" . ( $self->cfg->{guest_number} || 0 ) . "-Overview\n"
+        . "# Tapper-suite-name: PRC" . ( $self->cfg->{guest_number} || 0 ) . "-Attachments\n"
         . "# Tapper-machine-name: " . $self->cfg->{hostname} . "\n"
         . "# Tapper-reportgroup-testrun: " . $self->cfg->{test_run} . "\n"
         . "ok - Test attachments\n"
