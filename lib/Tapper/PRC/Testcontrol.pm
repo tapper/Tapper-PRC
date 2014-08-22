@@ -312,10 +312,6 @@ sub testprogram_execute
                         return $error_msg if $b_error;
                 }
 
-                # send attachment report
-                my ( $b_error, $s_error_msg ) = $self->send_attachements();
-                return $s_error_msg if $b_error;
-
                 return "Killed $program after $test_program->{timeout} seconds" if $killed;
                 if ( $retval ) {
                         my $error;
@@ -777,6 +773,11 @@ sub run
                 kill 9, $config->{keep_alive_child};
         }
         sleep 1; # make sure last end-testing can't overtake last end-testprogram (Yes, this did happen)
+
+        # send attachment report
+        my ( $b_error, $s_error_msg ) = $self->send_attachements();
+        $self->log->error( $s_error_msg ) if $b_error;
+
         $retval = $self->mcp_inform({state => 'end-testing'});
 
 
