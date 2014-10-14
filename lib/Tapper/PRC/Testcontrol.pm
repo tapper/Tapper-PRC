@@ -140,7 +140,7 @@ sub upload_files
         chomp $s_file;
 
         my $s_reportfile =  $s_file;
-           $s_reportfile =~ s|^$s_path||;
+           $s_reportfile =~ s|^$s_path/*||;
            $s_reportfile =~ s|^./||;
            $s_reportfile =~ s|[^A-Za-z0-9_-]|_|g;
 
