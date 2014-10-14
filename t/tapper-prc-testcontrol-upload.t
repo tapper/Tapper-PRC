@@ -32,7 +32,6 @@ $testcontrol->cfg->{report_api_port} = Tapper::Config->subconfig->{report_api_po
 
 my $upload_dir = Tapper::Config->subconfig->{paths}{output_dir}."/4";
 if (not -e $upload_dir) {
-        print STDERR "makedir upload_dir: $upload_dir\n";
         $testcontrol->makedir("$upload_dir/install"); # inherited from Tapper::Base;
 }
 open my $fh, ">", "$upload_dir/install/prove" or die "Can not create upload file: $!";
@@ -46,7 +45,6 @@ $pid = fork();
 if ($pid == 0) {
         sleep(2); # bad and ugly to prevent race condition
         $ENV{TAPPER_OUTPUT_PATH} = $upload_dir;
-        print STDERR "before upload_files\n";
         $retval = $testcontrol->upload_files(23);
 
         # Can't make this a test since the test counter isn't handled correctly after fork
@@ -62,11 +60,9 @@ if ($pid == 0) {
                     die ("timeout of 5 seconds reached while waiting for file upload test.")
                 };
                 alarm(5);
-                print STDERR "server waits for upload\n";
                 my $msg_sock = $server->accept();
                 while (my $line = <$msg_sock>) {
                         $content .= $line;
-                        print STDERR "server received line: $line\n";
                 }
                 alarm(0);
         };
