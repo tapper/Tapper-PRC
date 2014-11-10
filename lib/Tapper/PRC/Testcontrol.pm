@@ -274,23 +274,26 @@ sub testprogram_execute
                 close $write;
                 exit -1;
         } else {
+
                 # hello parent
                 close $write;
-                my $killed;
-                # (XXX) better create a process group an kill this
-                local $SIG{ALRM}=sub {
-                                      $killed = 1;
-                                      kill (15, $pid);
 
-                                      # allow testprogram to react on SIGTERM
-                                      my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
-                                      while ($grace_period and (kill 0, $pid)) {
-                                              waitpid($pid,0);
-                                              sleep 1;
-                                              $grace_period--;
-                                      }
-                                      kill (9, $pid);
-                                     };
+                # (XXX) better create a process group an kill this
+                my $killed;
+                local $SIG{ALRM} = sub {
+                    $killed = 1;
+                    kill (15, $pid);
+
+                    # allow testprogram to react on SIGTERM
+                    my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
+                    while ( $grace_period > 0 and (kill 0, $pid) ) {
+                        sleep 1;
+                        $grace_period--;
+                    }
+
+                    kill (9, $pid);
+                };
+
                 alarm ($test_program->{timeout} || 0);
                 waitpid($pid,0);
                 my $retval = $?;
