@@ -306,10 +306,16 @@ sub testprogram_execute
                 }
                 if ($test_program->{capture}) {
                         my $captured_output;
-                        given($test_program->{capture}) {
-                                when ( 'tap'        ) { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stdout")}; return $@ if $@;               };
-                                when ( 'tap-stderr' ) { eval { $captured_output = $self->capture_handler_tap("$output$appendix.stderr")}; return $@ if $@;               };
-                                default               { return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)"; };
+                        if ( $test_program->{capture} eq 'tap' ) {
+                                eval { $captured_output = $self->capture_handler_tap("$output$appendix.stdout")};
+                                return $@ if $@;
+                        }
+                        elsif ( $test_program->{capture} eq 'tap-stderr' ) {
+                            eval { $captured_output = $self->capture_handler_tap("$output$appendix.stderr")};
+                            return $@ if $@;
+                        }
+                        else               {
+                            return "Can not handle captured output, unknown capture type '$test_program->{capture}'. Valid types are (tap)";
                         }
                         my ( $b_error, $error_msg ) =  $self->send_output($captured_output, $test_program);
                         return $error_msg if $b_error;
@@ -696,7 +702,6 @@ sub send_keep_alive_loop
         return;
 }
 
-
 =head2 run
 
 Main function of Program Run Control.
@@ -706,9 +711,10 @@ Main function of Program Run Control.
 sub run
 {
         my ($self) = @_;
-        my $retval;
+
         my $producer = Tapper::Remote::Config->new();
-        my $config = $producer->get_local_data("test-prc0");
+        my $config   = $producer->get_local_data("test-prc0");
+
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
@@ -716,46 +722,43 @@ sub run
                 $self->log_to_file('testing');
         }
 
-        if ($config->{times}{keep_alive_timeout}) {
-                $SIG{CHLD} = 'IGNORE';
-                my $pid = fork();
-                if ($pid == 0) {
-                        $self->send_keep_alive_loop($config->{times}{keep_alive_timeout});
-                        exit;
-                } else {
-                        $config->{keep_alive_child} = $pid;
-                }
-        }
-
         # ignore error
         $self->log_and_exec('ntpdate -s gwo');
 
         if ($config->{prc_nfs_server}) {
-                $retval = $self->nfs_mount();
-                $self->log->warn($retval) if $retval;
+                if ( my $retval = $self->nfs_mount() ) {
+                        $self->log->warn($retval);
+                }
         }
 
-        $self->log->logdie($retval) if $retval = $self->create_log();
+        if ( my $retval = $self->create_log() ) {
+                $self->log->logdie($retval);
+        }
 
         if ($config->{scenario_id}) {
                 my $syncfile = $config->{paths}{sync_path}."/".$config->{scenario_id}."/syncfile";
                 if (-e $syncfile) {
                         $self->cfg->{syncfile} = $syncfile;
 
-                        $retval = $self->wait_for_sync($syncfile);
-                        $self->log->logdie("Can not sync - $retval") if $retval;
+                        if ( my $retval = $self->wait_for_sync($syncfile) ) {
+                                $self->log->logdie("Can not sync - $retval");
+                        }
                 }
         }
 
         if ($self->{cfg}->{guest_count}) {
-
-                $retval = $self->guest_start();
-                $self->log->error($retval) if $retval;
+                if ( my $retval = $self->guest_start() ) {
+                        $self->log->error($retval);
+                }
         }
 
-        $retval = $self->mcp_inform({state => 'start-testing'}) if not $self->cfg->{reboot_counter};
+        if ( not $self->cfg->{reboot_counter} ) {
+                $self->mcp_inform({state => 'start-testing'});
+        }
 
-        $retval = $self->control_testprogram() if $self->cfg->{test_program} or $self->cfg->{testprogram_list};
+        if ( $self->cfg->{test_program} or $self->cfg->{testprogram_list} ) {
+                $self->control_testprogram();
+        }
 
         if ($self->cfg->{max_reboot}) {
                 $self->mcp_inform({state => 'reboot', count => $self->cfg->{reboot_counter}, max_reboot => $self->cfg->{max_reboot}});
@@ -768,21 +771,17 @@ sub run
 
         }
 
-
-        # no longer send keepalive
-        if ($config->{keep_alive_child}) {
-                kill 15, $config->{keep_alive_child};
-                sleep 2;
-                kill 9, $config->{keep_alive_child};
-        }
         sleep 1; # make sure last end-testing can't overtake last end-testprogram (Yes, this did happen)
 
         # send attachment report
         my ( $b_error, $s_error_msg ) = $self->send_attachements();
-        $self->log->error( $s_error_msg ) if $b_error;
+        if ( $b_error ) {
+                $self->log->error( $s_error_msg );
+        }
 
-        $retval = $self->mcp_inform({state => 'end-testing'});
+        $self->mcp_inform({state => 'end-testing'});
 
+        return 1;
 
 }
 
