@@ -34,7 +34,8 @@ my $logconf =
 
 Log::Log4perl::init(\$logconf);
 
-if ( $ENV{TAPPER_TEST_TYPE} eq 'ssh' ) {
+if ( defined($ENV{TAPPER_TEST_TYPE}) and
+     $ENV{TAPPER_TEST_TYPE} eq 'ssh' ) {
     my $client = Tapper::Installer::Base->new;
        $client->system_install('ssh');
 }
