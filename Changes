@@ -1,6 +1,16 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - output files
+        - lot of edge case polishing around
+          * timeout handling
+          * interdependent scenarios
+          * capturing TAP/stderr from test program output
+          * better sleep time coordination between MCP and PRC
+          * working from Gearman job servers
+        - find test programs in PATH
+        - file upload moved to PRC from MCP
+        - handle file upload outside of timeout handled code
 
 4.1.2     2012-11-23
         - self-made daemonize for better support of
