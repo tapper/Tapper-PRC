@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - timeout handling kills whole process tree
 
 5.0.0     2016-02-15
         - output files
