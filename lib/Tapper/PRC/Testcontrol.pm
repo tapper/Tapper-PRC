@@ -194,6 +194,65 @@ sub get_appendix {
         return $appendix;
 }
 
+=head2 kill_process($pid)
+
+Gracefully kill a single process.
+
+=cut
+
+sub kill_process
+{
+    my ($pid) = @_;
+
+    # allow testprogram to react on SIGTERM, then do SIGKILL
+    kill ('SIGTERM', $pid);
+    waitpid $pid, 0;
+    my $grace_period = $ENV{HARNESS_ACTIVE} ? 0 : 2;
+    while ( $grace_period > 0 and (kill 0, $pid) ) {
+        $grace_period--;
+        sleep 1;
+    }
+    if (kill 0, $pid) {
+        kill 'SIGKILL', $pid;
+        waitpid $pid, 0;
+    }
+}
+
+=head2 get_process_tree($pid)
+
+Get list of children for a process. The process itself is not
+contained in the list.
+
+=cut
+
+sub get_process_tree
+{
+  my ($pid) = @_;
+
+  return () unless $pid && $pid > 1;
+
+  require Proc::Killfam;
+  require Proc::ProcessTable;
+  return Proc::Killfam::get_pids(Proc::ProcessTable->new->table, $pid);
+}
+
+=head2 kill_process_tree($pid)
+
+Kill whole tree of processes, depth-first, with extreme prejudice.
+
+=cut
+
+sub kill_process_tree
+{
+    my ($pid) = @_;
+
+    return unless $pid > 1;
+
+    my @pids = get_process_tree($pid);
+    kill_process($_) foreach ($pid, @pids);
+    if (@pids) { kill_process_tree($_) foreach @pids }
+}
+
 =head2 testprogram_execute
 
 Execute one testprogram. Handle all error conditions.
@@ -278,20 +337,10 @@ sub testprogram_execute
                 # hello parent
                 close $write;
 
-                # (XXX) better create a process group an kill this
                 my $killed;
                 local $SIG{ALRM} = sub {
                     $killed = 1;
-                    kill (15, $pid);
-
-                    # allow testprogram to react on SIGTERM
-                    my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
-                    while ( $grace_period > 0 and (kill 0, $pid) ) {
-                        sleep 1;
-                        $grace_period--;
-                    }
-
-                    kill (9, $pid);
+                    kill_process_tree ($pid);
                 };
 
                 alarm ($test_program->{timeout} || 0);
