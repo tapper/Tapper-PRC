@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+5.0.2     2016-11-11
         - Rename PRC-Testcontrol process name (\$0) with a testrun_id
           (e.g., tapper-prc-testcontrol-12345)
 
