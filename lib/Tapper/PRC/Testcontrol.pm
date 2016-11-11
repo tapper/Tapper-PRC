@@ -374,6 +374,7 @@ sub testprogram_execute
                 if ( $retval ) {
                         my $error;
                         sysread($read,$error, $MAXREAD);
+                        $error =~ s/[\r\n]//g;
                         return("Executing $program failed:$error");
                 }
         }
@@ -765,6 +766,9 @@ sub run
         my $config   = $producer->get_local_data("test-prc0");
 
         $self->cfg($config);
+
+        $0 = "tapper-prc-testcontrol-".$self->cfg->{test_run};
+
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
 
         if ($self->cfg->{log_to_file}) {
