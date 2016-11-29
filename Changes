@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - remove uploaded files on PRC0-Attachments,
+          so MCP does not upload them again
 
 5.0.2     2016-11-11
         - Rename PRC-Testcontrol process name (\$0) with a testrun_id

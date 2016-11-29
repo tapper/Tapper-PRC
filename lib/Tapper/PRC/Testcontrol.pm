@@ -158,7 +158,7 @@ sub upload_files
         }
         close($fh_file);
         $or_server->close();
-
+        unlink $s_file; # so we don't upload file again when MCP uploads remaining bits
     }
 
     return 0;
