@@ -141,8 +141,8 @@ sub upload_files
 
         my $s_reportfile =  $s_file;
            $s_reportfile =~ s|^$s_path/*||;
-           $s_reportfile =~ s|^./||;
-           $s_reportfile =~ s|[^A-Za-z0-9_-]|_|g;
+           #$s_reportfile =~ s|^./||;
+           #$s_reportfile =~ s|[^A-Za-z0-9_-]|_|g;
 
         my $or_server = IO::Socket::INET->new(
             PeerAddr => $s_host,
