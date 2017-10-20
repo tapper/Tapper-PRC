@@ -824,7 +824,18 @@ sub run
 
         }
 
-        sleep 1; # make sure last end-testing can't overtake last end-testprogram (Yes, this did happen)
+        # TODO: too cheap work-around
+        #
+        # Make sure last end-testing can't overtake last
+        # end-testprogram (Yes, this did happen).
+        #
+        # Wait at least as long as the MCP loop time is, see
+        # tapper.cfg:
+        #  - mcp.child.get_message_sleep_interval
+        #  - times.poll_intervall
+
+
+        sleep ($ENV{HARNESS_ACTIVE} ? 1 : 10);
 
         # send attachment report
         my ( $b_error, $s_error_msg ) = $self->send_attachements();
