@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+        - tweak timout race conditions
         - remove uploaded files on PRC0-Attachments,
           so MCP does not upload them again
         - less aggressive name simplification of uploaded files
