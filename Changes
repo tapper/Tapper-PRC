@@ -5,6 +5,8 @@ Revision history for {{$dist->name}}
         - remove uploaded files on PRC0-Attachments,
           so MCP does not upload them again
         - less aggressive name simplification of uploaded files
+        - Minion worker for test_type 'minion' - the counterpart
+          to Minion support in Tapper::MCP.
 
 5.0.2     2016-11-11
         - Rename PRC-Testcontrol process name (\$0) with a testrun_id
