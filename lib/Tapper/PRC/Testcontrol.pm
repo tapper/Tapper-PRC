@@ -495,12 +495,15 @@ not. Existing files of wrong type are deleted.
 @retval error   - error string
 
 =cut
-        
+
 sub create_log
 {
         my ($self) = @_;
         my $testrun = $self->cfg->{test_run};
-        my $outdir  = $self->cfg->{paths}{output_dir}."/$testrun/test/";
+        my $output_dir = ($self->cfg->{test_type} || '') eq 'minion'
+          ? $self->cfg->{paths}{minion_output_dir}
+          : $self->cfg->{paths}{output_dir};
+        my $outdir  = "$output_dir/$testrun/test/";
         my ($error, $retval);
 
         for (my $i = 0; $i <= $#{$self->cfg->{guests}}; $i++) {
@@ -578,7 +581,10 @@ sub control_testprogram
         }
 
         my $test_run         = $self->cfg->{test_run};
-        my $out_dir          = $self->cfg->{paths}{output_dir}."/$test_run/test/";
+        my $output_dir       = ($self->cfg->{test_type} || '') eq 'minion'
+          ? $self->cfg->{paths}{minion_output_dir}
+          : $self->cfg->{paths}{output_dir};
+        my $out_dir          = "$output_dir/$test_run/test/";
         my @testprogram_list;
            @testprogram_list = @{$self->cfg->{testprogram_list}} if $self->cfg->{testprogram_list};
 
