@@ -338,10 +338,18 @@ sub testprogram_execute
                 close $write;
 
                 my $killed;
-                local $SIG{ALRM} = sub {
+                my $sig_name;
+                my $signal_kill = sub {
                     $killed = 1;
+                    ($sig_name) = @_;
+                    $self->log->warn("Catched signal $sig_name");
                     kill_process_tree ($pid);
                 };
+                local $SIG{ALRM} = $signal_kill;
+                local $SIG{TERM} = $signal_kill;
+                local $SIG{KILL} = $signal_kill;
+                local $SIG{QUIT} = $signal_kill;
+                local $SIG{INT}  = $signal_kill;
 
                 alarm ($test_program->{timeout} || 0);
                 waitpid($pid,0);
@@ -370,7 +378,16 @@ sub testprogram_execute
                         return $error_msg if $b_error;
                 }
 
-                return "Killed $program after $test_program->{timeout} seconds" if $killed;
+                if ($killed) {
+                    return
+                        "Killed $program after SIG:$sig_name"
+                        .(
+                          $sig_name eq "ALRM"
+                            ? " (timeout ".$test_program->{timeout}." seconds)"
+                            : ""
+                        );
+                }
+
                 if ( $retval ) {
                         my $error;
                         sysread($read,$error, $MAXREAD);
