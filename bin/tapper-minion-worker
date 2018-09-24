@@ -122,7 +122,7 @@ ${not}ok - tapper-minion-worker - job execution
 }
 
 # monkey-patch the original too hard "KILL" signal away
-local *Minion::Job::stop = sub { kill 'INT', shift->{pid} };
+local *Minion::Job::stop = sub { shift->kill('INT') };
 
 # Add tasks for Tapper testrun execution using Tapper::PRC
 $minion->add_task
