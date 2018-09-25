@@ -3,6 +3,7 @@ Revision history for {{$dist->name}}
 {{$NEXT}}
         - adapt hot-patched KILL-avoidance code to latest
           reworked signal handling in Minion::Job
+        - improve signal finishing behaviour
 
 5.0.3     2018-09-19
         - tweak timout race conditions
