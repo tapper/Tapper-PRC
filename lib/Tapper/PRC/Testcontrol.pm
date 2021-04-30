@@ -580,6 +580,14 @@ sub control_testprogram
                 $ENV{TAPPER_TESTPLAN_PATH} = $self->cfg->{testplan}{path};
         }
 
+        if (defined $self->cfg->{resources} && ref $self->cfg->{resources} eq 'ARRAY') {
+                my $i = 0;
+                foreach my $resource (@{$self->cfg->{resources}}) {
+                        $ENV{"TAPPER_RESOURCE_$i"} = $resource;
+                        $i++;
+                }
+        }
+
         my $test_run         = $self->cfg->{test_run};
         my $output_dir       = ($self->cfg->{test_type} || '') eq 'minion'
           ? $self->cfg->{paths}{minion_output_dir}
