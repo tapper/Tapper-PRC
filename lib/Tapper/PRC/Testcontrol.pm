@@ -13,8 +13,10 @@ use File::Basename 'dirname';
 use English '-no_match_vars';
 use IO::Handle;
 use File::Basename qw/basename dirname/;
+use LWP::UserAgent;
 
 use Tapper::Remote::Config;
+use Tapper::Config;
 # ABSTRACT: Control running test programs
 
 extends 'Tapper::PRC';
@@ -128,12 +130,21 @@ sub upload_files
     my $s_host = $or_self->cfg->{report_server};
     my $i_port = $or_self->cfg->{report_api_port};
     my $s_path = $ENV{TAPPER_OUTPUT_PATH};
+    my $i_testrun = $or_self->cfg->{test_run};
+    my $s_testplan = $or_self->cfg->{testplan}{id} || "none";
 
     return 0 unless -d $s_path;
 
     my @a_files = `find $s_path -type f`;
 
     $or_self->log->debug( @a_files );
+
+    my $ostore_endpoint = Tapper::Config->subconfig->{ostore}{endpoint};
+    my $ua = LWP::UserAgent->new();
+    if (defined($ostore_endpoint)) {
+        $ostore_endpoint =~ s,/$,,;
+        $ostore_endpoint .= "/upload";
+    }
 
     foreach my $s_file( @a_files ) {
 
@@ -144,6 +155,20 @@ sub upload_files
            #$s_reportfile =~ s|^./||;
            #$s_reportfile =~ s|[^A-Za-z0-9_-]|_|g;
 
+        if (defined($ostore_endpoint)) {
+            my $resp = $ua->post(
+              $ostore_endpoint,
+              "X-Ostore-report" => $i_reportid,
+              "X-Ostore-testrun" => $i_testrun,
+              "X-Ostore-testplan" => $s_testplan,
+              "X-Ostore-suitename" => "PRC0-Attachments",
+              "X-Ostore-filename" => $s_reportfile,
+              "X-Ostore-uploadedby" => "tapper-minion-worker",
+              Content_Type => "form-data",
+              Content => [ file => [ $s_file ] ],
+            );
+            return "Cannot upload file to object storage at $ostore_endpoint" unless $resp->code == 200;
+        }
         my $or_server = IO::Socket::INET->new(
             PeerAddr => $s_host,
             PeerPort => $i_port,
