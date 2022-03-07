@@ -67,9 +67,9 @@ sub send_output
 
         # add missing minimum Tapper meta information
         my $headerlines = "";
-        $headerlines .= "# Tapper-suite-name: ".basename($testprogram->{program})."\n" unless $captured_output =~ /\# Tapper-suite-name:/;
-        $headerlines .= "# Tapper-machine-name: ".$self->cfg->{hostname}."\n"          unless $captured_output =~ /\# Tapper-machine-name:/;
-        $headerlines .= "# Tapper-reportgroup-testrun: ".$self->cfg->{test_run}."\n"   unless $captured_output =~ /\# Tapper-reportgroup-testrun:/;
+        $headerlines .= "# Test-suite-name: ".basename($testprogram->{program})."\n" unless $captured_output =~ /\# (Tapper|Test)-suite-name:/;
+        $headerlines .= "# Test-machine-name: ".$self->cfg->{hostname}."\n"          unless $captured_output =~ /\# (Tapper|Test)-machine-name:/;
+        $headerlines .= "# Test-reportgroup-testrun: ".$self->cfg->{test_run}."\n"   unless $captured_output =~ /\# (Tapper|Test)-reportgroup-testrun:/;
 
         $captured_output =~ s/^(1\.\.\d+\n)/$1$headerlines/m;
 
@@ -96,9 +96,9 @@ sub send_attachements {
     my ( $b_error, $s_message ) = $self->tap_report_away(
           "TAP version 13\n"
         . "1..1\n"
-        . "# Tapper-suite-name: PRC" . ( $self->cfg->{guest_number} || 0 ) . "-Attachments\n"
-        . "# Tapper-machine-name: " . $self->cfg->{hostname} . "\n"
-        . "# Tapper-reportgroup-testrun: " . $self->cfg->{test_run} . "\n"
+        . "# Test-suite-name: PRC" . ( $self->cfg->{guest_number} || 0 ) . "-Attachments\n"
+        . "# Test-machine-name: " . $self->cfg->{hostname} . "\n"
+        . "# Test-reportgroup-testrun: " . $self->cfg->{test_run} . "\n"
         . "ok - Test attachments\n"
     );
 
