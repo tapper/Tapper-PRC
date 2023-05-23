@@ -93,12 +93,14 @@ sub send_attachements {
 
     my ( $self ) = @_;
 
+    my $testplan_id = $self->cfg->{testplan}{id} // '';
     my ( $b_error, $s_message ) = $self->tap_report_away(
           "TAP version 13\n"
         . "1..1\n"
         . "# Test-suite-name: PRC" . ( $self->cfg->{guest_number} || 0 ) . "-Attachments\n"
         . "# Test-machine-name: " . $self->cfg->{hostname} . "\n"
         . "# Test-reportgroup-testrun: " . $self->cfg->{test_run} . "\n"
+        . ( $testplan_id ? "# Test-testplan-id: $testplan_id\n" : '')
         . "ok - Test attachments\n"
     );
 
