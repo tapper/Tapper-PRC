@@ -784,6 +784,7 @@ sub wait_for_sync
                         }
                 } else {
                         # handle timeout here when can_read() has a timeout eventually
+                        sleep(1);
                 }
         }
         return 0;
