@@ -81,7 +81,9 @@ sub kill_ps_tree
 
   #say "kill_ps_tree: ";
 
-  while (my @pids = get_ps_tree($pid)) {
+  my $remaining_tries = 5000;
+
+  while ($remaining_tries-- && (my @pids = get_ps_tree($pid))) {
     #say "  KILL ".join(',', @pids);
     my $innerpid = $pids[-1];
     my $second_innerpid = $pids[-2];
