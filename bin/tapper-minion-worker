@@ -94,8 +94,6 @@ sub kill_ps_tree
       kill 'SIGTERM', $second_innerpid;
     }
   }
-  kill 'SIGTERM', $pid;
-  waitpid $pid, 0;
 }
 
 # Send report and status back to Tapper
