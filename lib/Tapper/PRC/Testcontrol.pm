@@ -233,7 +233,6 @@ sub kill_process
 
     # allow testprogram to react on SIGTERM, then do SIGKILL
     kill ('SIGTERM', $pid);
-    waitpid $pid, 0;
     my $grace_period = $ENV{HARNESS_ACTIVE} ? 0 : 2;
     while ( $grace_period > 0 and (kill 0, $pid) ) {
         $grace_period--;
@@ -241,7 +240,6 @@ sub kill_process
     }
     if (kill 0, $pid) {
         kill 'SIGKILL', $pid;
-        waitpid $pid, 0;
     }
 }
 

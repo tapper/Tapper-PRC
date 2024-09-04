@@ -89,11 +89,9 @@ sub kill_ps_tree
     my $second_innerpid = $pids[-2];
     if ($innerpid) {
       kill 'SIGTERM', $innerpid;
-      waitpid $innerpid, 0;
     }
     if ($second_innerpid) {
       kill 'SIGTERM', $second_innerpid;
-      waitpid $second_innerpid, 0;
     }
   }
   kill 'SIGTERM', $pid;
