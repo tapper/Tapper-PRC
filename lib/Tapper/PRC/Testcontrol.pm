@@ -367,7 +367,7 @@ sub testprogram_execute
                 my $signal_kill = sub {
                     $killed = 1;
                     ($sig_name) = @_;
-                    $self->log->warn("Catched signal $sig_name");
+                    $self->log->warn("Caught signal $sig_name");
                     kill_process_tree ($pid);
                 };
                 local $SIG{ALRM} = $signal_kill;
