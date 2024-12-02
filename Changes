@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+5.0.5     2024-12-02
         - Implement abstract resources [tu-maurice]
         - Implement support for attachment upload to OStore [tu-maurice]
         - TAP headers use '# Test-*' now
