@@ -41,6 +41,13 @@ my $worker     = $minion->worker;
 
 # ========== Auxiliary functions ==========
 
+sub cat {
+  my $file = shift;
+  local $/ = undef;
+  open my $fh, "<", $file or return undef;
+  <$fh>;
+};
+
 sub get_pidmap
 {
   opendir(my $proc_dh, "/proc");
