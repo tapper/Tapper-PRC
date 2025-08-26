@@ -414,10 +414,11 @@ sub testprogram_execute
                 }
 
                 if ( $retval ) {
+                        my $ecode = ($retval >> 8);
                         my $error;
                         sysread($read,$error, $MAXREAD);
                         $error =~ s/[\r\n]//g;
-                        return("Executing $program failed:$error");
+                        return("Executing $program failed (exit code $ecode):$error");
                 }
         }
         return 0;
